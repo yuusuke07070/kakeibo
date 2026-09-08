@@ -79,7 +79,19 @@
     }
     .summary-label { font-size: 0.75rem; color: #64748b; font-weight: bold; }
     .summary-value { font-size: 0.95rem; font-weight: bold; margin-top: 6px; }
-    .chart-container { position: relative; width: 100%; height: 320px; }
+
+    /* 横スクロール可能な外枠 */
+    .chart-scroll-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 340px;
+      min-width: 100%;
+    }
     .loading { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; }
   </style>
 </head>
@@ -101,30 +113,32 @@
     <div class="summary-grid">
       <div class="summary-item">
         <div class="summary-label">資産</div>
-        <div class="summary-value" id="assetVal" style="color: var(--asset-color);">¥0</div>
+        <div class="summary-value" id="assetVal" style="color: var(--asset-color);">設定なし</div>
       </div>
       <div class="summary-item">
         <div class="summary-label">想定資産</div>
-        <div class="summary-value" id="expectedVal" style="color: var(--expected-color);">¥0</div>
+        <div class="summary-value" id="expectedVal" style="color: var(--expected-color);">設定なし</div>
       </div>
       <div class="summary-item">
         <div class="summary-label">残ローン</div>
-        <div class="summary-value" id="loanVal" style="color: var(--loan-color);">¥0</div>
+        <div class="summary-value" id="loanVal" style="color: var(--loan-color);">設定なし</div>
       </div>
     </div>
   </div>
 
-  <!-- 全財産グラフ（折れ線） -->
+  <!-- 全財産グラフ（折れ線・スクロール対応） -->
   <div class="card">
     <div class="card-title">📈 資産・ローン推移グラフ</div>
-    <div class="chart-container" id="chartArea">
-      <div class="loading">データを読み込み中...</div>
-      <canvas id="assetChart" style="display: none;"></canvas>
+    <div class="chart-scroll-wrapper" id="scrollWrapper">
+      <div class="chart-container" id="chartArea">
+        <div class="loading">データを読み込み中...</div>
+        <canvas id="assetChart" style="display: none;"></canvas>
+      </div>
     </div>
   </div>
 
   <script>
-    // ⚠️ スプレッドシート（GAS）のウェブアプリURLを貼り付けてください
+    // 設定されたGASウェブアプリURL
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsxsld_XVrxfKKN7uSbFbEDi6csd1hx-J8eOZf5u0C5oSIWbEud8UW5TuuPcxnM50/exec";
 
     let myChart = null;
@@ -152,41 +166,69 @@
     function formatDateToYM(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr; // 変換失敗時はそのまま返す
+      if (isNaN(d.getTime())) return dateStr;
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       return `${year}/${month}`;
     }
 
+    // 値を金額表記に変換（nullや空文字の場合は「設定なし」）
+    function formatValue(val) {
+      if (val === null || val === undefined || val === '') return '設定なし';
+      const num = Number(val);
+      return isNaN(num) ? '設定なし' : `¥${num.toLocaleString()}`;
+    }
+
     function render(data) {
       if (!data || data.length === 0) return;
 
-      // 日付順（昇順）に並び替え
-      data.sort((a, b) => new Date(a.date) - new Date(b.date));
+      // 有効な日付データのみ抽出し昇順ソート
+      const validData = data
+        .filter(d => d.date && !isNaN(new Date(d.date).getTime()))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // 末尾（＝最新月/当月）のデータを取得
-      const currentData = data[data.length - 1];
+      if (validData.length === 0) return;
 
-      // 当月情報・カード数値を反映
+      // 今日の日付を取得し、未来の年月データを除外した最新月を「現在の状況」に設定
+      const today = new Date();
+      const pastOrCurrentData = validData.filter(d => new Date(d.date) <= today);
+      
+      const currentData = pastOrCurrentData.length > 0 
+        ? pastOrCurrentData[pastOrCurrentData.length - 1] 
+        : validData[0];
+
+      // カード数値・ヘッダーの反映
       document.getElementById('targetMonth').innerText = `(${formatDateToYM(currentData.date)} 時点)`;
-      document.getElementById('assetVal').innerText = `¥${currentData.asset.toLocaleString()}`;
-      document.getElementById('expectedVal').innerText = `¥${currentData.expected.toLocaleString()}`;
-      document.getElementById('loanVal').innerText = `¥${currentData.loan.toLocaleString()}`;
+      document.getElementById('assetVal').innerText = formatValue(currentData.asset);
+      document.getElementById('expectedVal').innerText = formatValue(currentData.expected);
+      document.getElementById('loanVal').innerText = formatValue(currentData.loan);
 
-      // グラフを描画
-      renderChart(data);
+      // 折れ線グラフを描画
+      renderChart(validData);
     }
 
     function renderChart(data) {
       const canvas = document.getElementById('assetChart');
+      const container = document.getElementById('chartArea');
+      const wrapper = document.getElementById('scrollWrapper');
+      
       canvas.style.display = 'block';
       const ctx = canvas.getContext('2d');
 
-      // 横軸ラベルを yyyy/mm に変換
+      // 横幅拡張（1データあたり80px確保してスクロール可能に）
+      const minPointWidth = 80;
+      const calculatedWidth = data.length * minPointWidth;
+      const finalWidth = Math.max(calculatedWidth, wrapper.clientWidth);
+      container.style.width = finalWidth + 'px';
+
       const labels = data.map(d => formatDateToYM(d.date));
-      const assetData = data.map(d => d.asset);
-      const expectedData = data.map(d => d.expected);
-      const loanData = data.map(d => d.loan);
+      
+      // 空欄・未設定値は 0 ではなく null として処理
+      const parseOrNull = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
+
+      const assetData = data.map(d => parseOrNull(d.asset));
+      const expectedData = data.map(d => parseOrNull(d.expected));
+      const loanData = data.map(d => parseOrNull(d.loan));
 
       if (myChart) myChart.destroy();
 
@@ -201,8 +243,8 @@
               borderColor: '#10b981',
               backgroundColor: '#10b981',
               borderWidth: 2,
-              pointRadius: 4,
-              tension: 0.1
+              pointRadius: 5,
+              spanGaps: false
             },
             {
               label: '想定資産',
@@ -210,8 +252,8 @@
               borderColor: '#3b82f6',
               backgroundColor: '#3b82f6',
               borderWidth: 2,
-              pointRadius: 4,
-              tension: 0.1
+              pointRadius: 5,
+              spanGaps: false
             },
             {
               label: '残ローン',
@@ -219,8 +261,8 @@
               borderColor: '#ef4444',
               backgroundColor: '#ef4444',
               borderWidth: 2,
-              pointRadius: 4,
-              tension: 0.1
+              pointRadius: 5,
+              spanGaps: false
             }
           ]
         },
@@ -232,6 +274,7 @@
             tooltip: {
               callbacks: {
                 label: function(context) {
+                  if (context.raw === null) return `${context.dataset.label}: 設定なし`;
                   return `${context.dataset.label}: ¥${context.raw.toLocaleString()}`;
                 }
               }
@@ -239,7 +282,8 @@
           },
           scales: {
             x: {
-              grid: { display: false }
+              grid: { display: false },
+              ticks: { autoSkip: false }
             },
             y: {
               beginAtZero: true,
@@ -252,6 +296,9 @@
           }
         }
       });
+
+      // 最新の月が見えるように右端へスクロール
+      wrapper.scrollLeft = wrapper.scrollWidth;
     }
   </script>
 </body>
