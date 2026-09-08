@@ -80,7 +80,6 @@
     .summary-label { font-size: 0.75rem; color: #64748b; font-weight: bold; }
     .summary-value { font-size: 0.95rem; font-weight: bold; margin-top: 6px; }
 
-    /* 横スクロール可能な外枠 */
     .chart-scroll-wrapper {
       width: 100%;
       overflow-x: auto;
@@ -93,6 +92,7 @@
       min-width: 100%;
     }
     .loading { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; }
+    .error-msg { text-align: center; padding: 20px; color: #ef4444; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -126,19 +126,18 @@
     </div>
   </div>
 
-  <!-- 全財産グラフ（折れ線・スクロール対応） -->
+  <!-- 全財産グラフ -->
   <div class="card">
     <div class="card-title">📈 資産・ローン推移グラフ</div>
     <div class="chart-scroll-wrapper" id="scrollWrapper">
       <div class="chart-container" id="chartArea">
-        <div class="loading">データを読み込み中...</div>
+        <div class="loading" id="loadingState">データを読み込み中...</div>
         <canvas id="assetChart" style="display: none;"></canvas>
       </div>
     </div>
   </div>
 
   <script>
-    // 設定されたGASウェブアプリURL
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsxsld_XVrxfKKN7uSbFbEDi6csd1hx-J8eOZf5u0C5oSIWbEud8UW5TuuPcxnM50/exec";
 
     let myChart = null;
@@ -149,61 +148,91 @@
 
     function fetchSheetData() {
       const canvas = document.getElementById('assetChart');
+      const loading = document.getElementById('loadingState');
       canvas.style.display = 'none';
-      
-      fetch(GAS_API_URL)
-        .then(response => response.json())
-        .then(data => {
-          render(data);
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('データの読み込みに失敗しました');
-        });
+      loading.style.display = 'block';
+      loading.className = 'loading';
+      loading.innerText = 'データを読み込み中...';
+
+      // GASのリダイレクト対応・通信設定
+      fetch(GAS_API_URL, {
+        method: 'GET',
+        redirect: 'follow'
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('ネットワークエラー');
+        return response.json();
+      })
+      .then(data => {
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          throw new Error('データが見つかりませんでした');
+        }
+        loading.style.display = 'none';
+        render(data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        loading.className = 'error-msg';
+        loading.innerText = 'データの読み込みに失敗しました。時間をおいて再読み込みしてください。';
+      });
     }
 
-    // 日付フォーマット変換関数 (YYYY-MM-DD -> YYYY/MM)
     function formatDateToYM(dateStr) {
       if (!dateStr) return '';
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      return `${year}/${month}`;
+      // YYYY-MM-DD や YYYY/MM/DD の文字列解析対応
+      const str = String(dateStr).trim();
+      const parts = str.match(/^(\d{4})[\-\/](\d{1,2})/);
+      if (parts) {
+        const y = parts[1];
+        const m = parts[2].padStart(2, '0');
+        return `${y}/${m}`;
+      }
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      }
+      return str;
     }
 
-    // 値を金額表記に変換（nullや空文字の場合は「設定なし」）
     function formatValue(val) {
-      if (val === null || val === undefined || val === '') return '設定なし';
-      const num = Number(val);
-      return isNaN(num) ? '設定なし' : `¥${num.toLocaleString()}`;
+      if (val === null || val === undefined || val === '' || isNaN(Number(val))) return '設定なし';
+      return `¥${Number(val).toLocaleString()}`;
     }
 
     function render(data) {
-      if (!data || data.length === 0) return;
+      // 日付のパース補助
+      const parseDate = (dStr) => {
+        if (!dStr) return 0;
+        const formatted = formatDateToYM(dStr);
+        const [y, m] = formatted.split('/');
+        return y && m ? new Date(y, m - 1, 1).getTime() : 0;
+      };
 
-      // 有効な日付データのみ抽出し昇順ソート
       const validData = data
-        .filter(d => d.date && !isNaN(new Date(d.date).getTime()))
-        .sort((a, b) => new Date(a.date) - new Date(b.date));
+        .filter(d => d && d.date)
+        .sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
       if (validData.length === 0) return;
 
-      // 今日の日付を取得し、未来の年月データを除外した最新月を「現在の状況」に設定
-      const today = new Date();
-      const pastOrCurrentData = validData.filter(d => new Date(d.date) <= today);
+      // 現在日時以前（実行月まで）で最新のものを抽出
+      const now = new Date();
+      const currentYM = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
       
+      const pastOrCurrentData = validData.filter(d => {
+        const ym = formatDateToYM(d.date);
+        return ym <= currentYM;
+      });
+
       const currentData = pastOrCurrentData.length > 0 
         ? pastOrCurrentData[pastOrCurrentData.length - 1] 
         : validData[0];
 
-      // カード数値・ヘッダーの反映
+      // サマリーカード表示
       document.getElementById('targetMonth').innerText = `(${formatDateToYM(currentData.date)} 時点)`;
       document.getElementById('assetVal').innerText = formatValue(currentData.asset);
       document.getElementById('expectedVal').innerText = formatValue(currentData.expected);
       document.getElementById('loanVal').innerText = formatValue(currentData.loan);
 
-      // 折れ線グラフを描画
       renderChart(validData);
     }
 
@@ -215,15 +244,12 @@
       canvas.style.display = 'block';
       const ctx = canvas.getContext('2d');
 
-      // 横幅拡張（1データあたり80px確保してスクロール可能に）
       const minPointWidth = 80;
       const calculatedWidth = data.length * minPointWidth;
       const finalWidth = Math.max(calculatedWidth, wrapper.clientWidth);
       container.style.width = finalWidth + 'px';
 
       const labels = data.map(d => formatDateToYM(d.date));
-      
-      // 空欄・未設定値は 0 ではなく null として処理
       const parseOrNull = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
 
       const assetData = data.map(d => parseOrNull(d.asset));
@@ -297,7 +323,6 @@
         }
       });
 
-      // 最新の月が見えるように右端へスクロール
       wrapper.scrollLeft = wrapper.scrollWidth;
     }
   </script>
