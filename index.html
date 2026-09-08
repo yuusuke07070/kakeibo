@@ -2,8 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>全財産ダッシュボード</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -17,14 +16,13 @@
       --text: #1e293b;
       --border: #e2e8f0;
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
       color: var(--text);
       margin: 0;
       padding: 12px;
-      padding-bottom: 32px;
     }
     .header {
       background: var(--primary);
@@ -33,7 +31,6 @@
       border-radius: 12px;
       text-align: center;
       margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
     .header h1 { margin: 0; font-size: 1.25rem; }
     .card {
@@ -42,7 +39,6 @@
       padding: 16px;
       margin-bottom: 16px;
       border: 1px solid var(--border);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .card-title {
       font-weight: bold;
@@ -64,7 +60,6 @@
       font-size: 0.8rem;
       color: #64748b;
       font-weight: normal;
-      margin-left: 6px;
     }
     .summary-grid {
       display: grid;
@@ -80,19 +75,12 @@
     .summary-label { font-size: 0.75rem; color: #64748b; font-weight: bold; }
     .summary-value { font-size: 0.95rem; font-weight: bold; margin-top: 6px; }
 
-    .chart-scroll-wrapper {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
+    /* グラフ領域 */
     .chart-container {
       position: relative;
-      height: 340px;
-      min-width: 100%;
+      height: 300px;
+      width: 100%;
     }
-    .loading { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; }
-    .error-msg { text-align: center; padding: 20px; color: #ef4444; font-size: 0.85rem; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -113,15 +101,15 @@
     <div class="summary-grid">
       <div class="summary-item">
         <div class="summary-label">資産</div>
-        <div class="summary-value" id="assetVal" style="color: var(--asset-color);">設定なし</div>
+        <div class="summary-value" id="assetVal" style="color: var(--asset-color);">--</div>
       </div>
       <div class="summary-item">
         <div class="summary-label">想定資産</div>
-        <div class="summary-value" id="expectedVal" style="color: var(--expected-color);">設定なし</div>
+        <div class="summary-value" id="expectedVal" style="color: var(--expected-color);">--</div>
       </div>
       <div class="summary-item">
         <div class="summary-label">残ローン</div>
-        <div class="summary-value" id="loanVal" style="color: var(--loan-color);">設定なし</div>
+        <div class="summary-value" id="loanVal" style="color: var(--loan-color);">--</div>
       </div>
     </div>
   </div>
@@ -129,11 +117,8 @@
   <!-- 全財産グラフ -->
   <div class="card">
     <div class="card-title">📈 資産・ローン推移グラフ</div>
-    <div class="chart-scroll-wrapper" id="scrollWrapper">
-      <div class="chart-container" id="chartArea">
-        <div class="loading" id="loadingState">データを読み込み中...</div>
-        <canvas id="assetChart" style="display: none;"></canvas>
-      </div>
+    <div class="chart-container">
+      <canvas id="assetChart"></canvas>
     </div>
   </div>
 
@@ -147,125 +132,68 @@
     };
 
     function fetchSheetData() {
-      const canvas = document.getElementById('assetChart');
-      const loading = document.getElementById('loadingState');
-      canvas.style.display = 'none';
-      loading.style.display = 'block';
-      loading.className = 'loading';
-      loading.innerText = 'データを読み込み中...';
-
-      fetch(GAS_API_URL, { method: 'GET' })
-        .then(response => {
-          if (!response.ok) throw new Error(`HTTPエラー: ${response.status}`);
-          return response.json();
-        })
+      fetch(GAS_API_URL)
+        .then(response => response.json())
         .then(data => {
-          if (!data || !Array.isArray(data) || data.length === 0) {
-            throw new Error('データが見つかりません。スプレッドシートの入力内容を確認してください。');
-          }
-          loading.style.display = 'none';
           render(data);
         })
         .catch(error => {
-          console.error('Fetch Error:', error);
-          loading.className = 'error-msg';
-          loading.innerText = `読み込みエラー: ${error.message}\nGASのWEBアプリ設定をご確認ください。`;
+          console.error('Error:', error);
         });
     }
 
-    // 日付整形（YYYY/MM形式に変換）
-    function formatDateToYM(dateStr) {
-      if (!dateStr) return '';
-      const str = String(dateStr).trim();
-      const match = str.match(/^(\d{4})[\-\/](\d{1,2})/);
-      if (match) {
-        return `${match[1]}/${match[2].padStart(2, '0')}`;
-      }
-      const d = new Date(str);
-      if (!isNaN(d.getTime())) {
-        return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-      }
-      return str;
+    // 日付整形 (YYYY/MM 形式)
+    function formatDate(dStr) {
+      if (!dStr) return '';
+      const d = new Date(dStr);
+      if (isNaN(d.getTime())) return String(dStr).substring(0, 7);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      return `${year}/${month}`;
     }
 
-    // 数値整形（数値としてパースできない・未設定時は「設定なし」）
-    function formatValue(val) {
-      if (val === null || val === undefined || val === '') return '設定なし';
-      const cleanVal = String(val).replace(/,/g, '');
-      const num = Number(cleanVal);
-      if (isNaN(num)) return '設定なし';
-      return `¥${num.toLocaleString()}`;
+    // 金額整形
+    function formatMoney(val) {
+      if (val === null || val === undefined || val === '' || isNaN(Number(val))) return '設定なし';
+      return `¥${Number(val).toLocaleString()}`;
     }
 
-    function render(rawData) {
-      // データのキー揺れ吸収（大文字小文字対応）
-      const normalizedData = rawData.map(item => {
-        const date = item.date || item.Date || item['日付'] || '';
-        const asset = item.asset !== undefined ? item.asset : (item.Asset || item['資産']);
-        const expected = item.expected !== undefined ? item.expected : (item.Expected || item['想定資産']);
-        const loan = item.loan !== undefined ? item.loan : (item.Loan || item['残ローン']);
-        return { date, asset, expected, loan };
-      }).filter(d => d.date);
+    function render(data) {
+      if (!data || data.length === 0) return;
 
-      if (normalizedData.length === 0) {
-        const loading = document.getElementById('loadingState');
-        loading.style.display = 'block';
-        loading.className = 'error-msg';
-        loading.innerText = '有効な日付データが存在しません。';
-        return;
-      }
+      // 日付順にソート
+      data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // 日付順ソート
-      normalizedData.sort((a, b) => {
-        const dateA = new Date(a.date.replace(/\//g, '-'));
-        const dateB = new Date(b.date.replace(/\//g, '-'));
-        return dateA - dateB;
-      });
-
-      // 今日以前の最新データを「現在の状況」として選定（2026/09）
+      // 今月（2026/09）以前の中で最新のデータを取得して「現在の状況」に表示
       const today = new Date();
       const currentYM = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}`;
+      
+      const pastOrCurrentData = data.filter(d => formatDate(d.date) <= currentYM);
+      const currentData = pastOrCurrentData.length > 0 
+        ? pastOrCurrentData[pastOrCurrentData.length - 1] 
+        : data[0];
 
-      const validPastData = normalizedData.filter(d => formatDateToYM(d.date) <= currentYM);
-      const currentData = validPastData.length > 0 
-        ? validPastData[validPastData.length - 1] 
-        : normalizedData[0];
-
-      // サマリー更新
-      document.getElementById('targetMonth').innerText = `(${formatDateToYM(currentData.date)} 時点)`;
-      document.getElementById('assetVal').innerText = formatValue(currentData.asset);
-      document.getElementById('expectedVal').innerText = formatValue(currentData.expected);
-      document.getElementById('loanVal').innerText = formatValue(currentData.loan);
+      // カード表示を更新
+      document.getElementById('targetMonth').innerText = `(${formatDate(currentData.date)} 時点)`;
+      document.getElementById('assetVal').innerText = formatMoney(currentData.asset);
+      document.getElementById('expectedVal').innerText = formatMoney(currentData.expected);
+      document.getElementById('loanVal').innerText = formatMoney(currentData.loan);
 
       // グラフ描画
-      renderChart(normalizedData);
+      renderChart(data);
     }
 
     function renderChart(data) {
-      const canvas = document.getElementById('assetChart');
-      const container = document.getElementById('chartArea');
-      const wrapper = document.getElementById('scrollWrapper');
+      const ctx = document.getElementById('assetChart').getContext('2d');
 
-      canvas.style.display = 'block';
-      const ctx = canvas.getContext('2d');
+      const labels = data.map(d => formatDate(d.date));
+      
+      // 未入力（空欄・null）のものは null のまま渡し、線を描画しない設定（spanGaps: false）
+      const parseValue = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
 
-      const minPointWidth = 80;
-      const calculatedWidth = data.length * minPointWidth;
-      const finalWidth = Math.max(calculatedWidth, wrapper.clientWidth);
-      container.style.width = finalWidth + 'px';
-
-      const labels = data.map(d => formatDateToYM(d.date));
-
-      const parseOrNull = (v) => {
-        if (v === null || v === undefined || v === '') return null;
-        const clean = String(v).replace(/,/g, '');
-        const num = Number(clean);
-        return isNaN(num) ? null : num;
-      };
-
-      const assetData = data.map(d => parseOrNull(d.asset));
-      const expectedData = data.map(d => parseOrNull(d.expected));
-      const loanData = data.map(d => parseOrNull(d.loan));
+      const assetData = data.map(d => parseValue(d.asset));
+      const expectedData = data.map(d => parseValue(d.expected));
+      const loanData = data.map(d => parseValue(d.loan));
 
       if (myChart) myChart.destroy();
 
@@ -280,8 +208,8 @@
               borderColor: '#10b981',
               backgroundColor: '#10b981',
               borderWidth: 2,
-              pointRadius: 5,
-              spanGaps: false
+              pointRadius: 4,
+              spanGaps: false // データが無い部分は線を結ばない
             },
             {
               label: '想定資産',
@@ -289,7 +217,7 @@
               borderColor: '#3b82f6',
               backgroundColor: '#3b82f6',
               borderWidth: 2,
-              pointRadius: 5,
+              pointRadius: 4,
               spanGaps: false
             },
             {
@@ -298,7 +226,7 @@
               borderColor: '#ef4444',
               backgroundColor: '#ef4444',
               borderWidth: 2,
-              pointRadius: 5,
+              pointRadius: 4,
               spanGaps: false
             }
           ]
@@ -307,21 +235,9 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom' },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  if (context.raw === null) return `${context.dataset.label}: 設定なし`;
-                  return `${context.dataset.label}: ¥${context.raw.toLocaleString()}`;
-                }
-              }
-            }
+            legend: { position: 'bottom' }
           },
           scales: {
-            x: {
-              grid: { display: false },
-              ticks: { autoSkip: false }
-            },
             y: {
               beginAtZero: true,
               ticks: {
@@ -333,8 +249,6 @@
           }
         }
       });
-
-      wrapper.scrollLeft = wrapper.scrollWidth;
     }
   </script>
 </body>
