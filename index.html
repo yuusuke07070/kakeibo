@@ -2,637 +2,313 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>統合版・家計簿＆資産管理</title>
-  <!-- Google Fonts & Chart.js -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>家計簿アプリ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent-color: #38bdf8;
-      --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --border-color: #334155;
-      --income-color: #34d399;
-      --expense-color: #f87171;
-      --danger-color: #f43f5e;
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
     }
-
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
-
     body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding-bottom: 40px;
-      min-height: 100vh;
-    }
-
-    /* ---- ナビゲーションバー ---- */
-    nav {
-      background-color: #1e293b;
-      border-bottom: 1px solid var(--border-color);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .nav-container {
-      max-width: 1000px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 20px;
-    }
-
-    .brand-logo {
-      font-weight: 700;
-      font-size: 18px;
-      background: var(--accent-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .nav-tabs {
-      display: flex;
-      gap: 10px;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      padding: 16px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .tab-btn:hover { color: var(--text-main); }
-    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
-
-    /* メインコンテナ */
-    .container {
-      max-width: 1000px;
-      margin: 30px auto 0;
-      padding: 0 20px;
-    }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    /* 共通カード */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-
-    /* フォーム要素 */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
-
-    input, select {
-      width: 100%;
-      padding: 10px 14px;
-      background-color: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-    }
-
-    input:focus, select:focus { border-color: var(--accent-color); }
-
-    button.btn-submit {
-      width: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
       padding: 12px;
-      background: var(--accent-gradient);
+      padding-bottom: 32px;
+    }
+    .header {
+      background: var(--primary);
       color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    button.btn-submit:hover { opacity: 0.9; }
-
-    /* テーブル共通 */
-    .table-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th, td { padding: 12px; font-size: 14px; border-bottom: 1px solid var(--border-color); }
-    th { color: var(--text-muted); font-weight: 500; background-color: rgba(255,255,255,0.02); }
-
-    .type-income { color: var(--income-color); font-weight: 600; }
-    .type-expense { color: var(--expense-color); font-weight: 600; }
-
-    .btn-delete {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .btn-delete:hover { color: var(--danger-color); }
-
-    /* サマリー（日常家計簿用） */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .summary-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      padding: 20px;
+      padding: 16px;
       border-radius: 12px;
       text-align: center;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
-
-    .summary-card div { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
-    .summary-card p { font-size: 22px; font-weight: 700; }
-
-    /* 資産ダッシュボード特有 */
-    .hero-card {
+    .header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+    .card {
       background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 24px;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-weight: bold;
+      margin-bottom: 12px;
+      font-size: 1rem;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 8px;
     }
-
-    .hero-card .value { font-size: 36px; font-weight: 700; }
-
-    .badge {
-      background: rgba(56, 189, 248, 0.1);
-      color: var(--accent-color);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
     }
-
-    .chart-container { position: relative; height: 320px; width: 100%; }
-
-    .grid-2col {
+    input[type="file"] {
+      display: none;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:active {
+      background: #1d4ed8;
+    }
+    .btn-danger {
+      background: #ef4444;
+      margin-top: 8px;
+    }
+    .btn-danger:active {
+      background: #dc2626;
+    }
+    .summary-grid {
       display: grid;
-      grid-template-columns: 1fr 1.5fr;
-      gap: 24px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
-
-    .import-box {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px dashed var(--border-color);
+    .summary-item {
+      background: #f1f5f9;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
     }
-
-    @media (max-width: 768px) {
-      .summary-grid { grid-template-columns: 1fr; }
-      .grid-2col { grid-template-columns: 1fr; }
-      .form-grid { grid-template-columns: 1fr; }
+    .summary-label {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .summary-value {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #f8fafc;
+      color: #64748b;
+    }
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 250px;
     }
   </style>
 </head>
 <body>
 
-  <nav>
-    <div class="nav-container">
-      <div class="brand-logo">Finance Hub</div>
-      <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('kakeibo')">日常の収支</button>
-        <button class="tab-btn" onclick="switchTab('asset')">全財産グラフ</button>
+  <div class="header">
+    <h1>家計簿ダッシュボード</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📁 CSVデータ読込</div>
+    <div class="file-input-wrapper">
+      <button class="btn" onclick="document.getElementById('csvFile').click()">CSVファイルを選択</button>
+      <input type="file" id="csvFile" accept=".csv" onchange="importCSV(event)">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 今月の収支概要</div>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-label">収入</div>
+        <div class="summary-value" id="incomeVal" style="color: #10b981;">¥0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">支出</div>
+        <div class="summary-value" id="expenseVal" style="color: #ef4444;">¥0</div>
       </div>
     </div>
-  </nav>
+  </div>
 
-  <div class="container">
-    
-    <!-- ==================== 1. 日常収支ページ ==================== -->
-    <div id="tab-kakeibo" class="tab-content active">
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div>収入合計</div>
-          <p id="k-total-income" style="color: var(--income-color)">¥0</p>
-        </div>
-        <div class="summary-card">
-          <div>支出合計</div>
-          <p id="k-total-expense" style="color: var(--expense-color)">¥0</p>
-        </div>
-        <div class="summary-card">
-          <div>収支残高</div>
-          <p id="k-total-balance" style="color: var(--accent-color)">¥0</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">収支の入力</div>
-        <form id="kakeibo-form">
-          <div class="form-grid">
-            <input type="date" id="k-date" required>
-            <select id="k-type">
-              <option value="expense">支出</option>
-              <option value="income">収入</option>
-            </select>
-            <input type="text" id="k-category" placeholder="カテゴリ (例: 食費)" required>
-            <input type="number" id="k-amount" placeholder="金額" min="1" required>
-            <input type="text" id="k-memo" placeholder="メモ">
-          </div>
-          <button type="submit" class="btn-submit">登録する</button>
-        </form>
-      </div>
-
-      <div class="card">
-        <div class="card-title">収支履歴</div>
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>日付</th>
-                <th>種類</th>
-                <th>カテゴリ</th>
-                <th>金額</th>
-                <th>メモ</th>
-                <th>削除</th>
-              </tr>
-            </thead>
-            <tbody id="k-transaction-list"></tbody>
-          </table>
-        </div>
-      </div>
+  <div class="card">
+    <div class="card-title">📈 支出内訳</div>
+    <div class="chart-container">
+      <canvas id="expenseChart"></canvas>
     </div>
+  </div>
 
-    <!-- ==================== 2. 全財産グラフページ ==================== -->
-    <div id="tab-asset" class="tab-content">
-      <div class="hero-card">
-        <div>
-          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">現在の総資産</div>
-          <div class="value" id="a-latest-asset">¥0</div>
-        </div>
-        <div class="badge" id="a-trend-badge">記録なし</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">資産推移グラフ</div>
-        <div class="chart-container">
-          <canvas id="assetChart"></canvas>
-        </div>
-      </div>
-
-      <div class="grid-2col">
-        <div class="card">
-          <div class="card-title">月別資産の記録</div>
-          <form id="asset-form">
-            <div class="form-group">
-              <label for="a-month">対象年月</label>
-              <input type="month" id="a-month" required>
-            </div>
-            <div class="form-group">
-              <label for="a-amount">全財産（合計額）</label>
-              <input type="number" id="a-amount" placeholder="例: 1500000" min="0" required>
-            </div>
-            <button type="submit" class="btn-submit">記録を保存</button>
-          </form>
-
-          <!-- CSV取り込み機能 -->
-          <div class="import-box">
-            <div class="form-group">
-              <label for="csv-file">CSVファイルから一括取り込み</label>
-              <input type="file" id="csv-file" accept=".csv, .txt">
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">記録履歴</div>
-          <div class="table-wrapper" style="max-height: 320px; overflow-y: auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>年月</th>
-                  <th>総資産</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody id="a-history-list"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+  <div class="card">
+    <div class="card-title">📝 履歴一覧</div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>項目</th>
+            <th>カテゴリ</th>
+            <th>金額</th>
+          </tr>
+        </thead>
+        <tbody id="dataTable">
+          <tr><td colspan="4" style="text-align:center; color:#94a3b8;">データがありません</td></tr>
+        </tbody>
+      </table>
     </div>
-
+    <button class="btn btn-danger" onclick="clearData()">データを消去</button>
   </div>
 
   <script>
-    // タブ切り替え制御
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    let myChart = null;
 
-      if (tabName === 'kakeibo') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('tab-kakeibo').classList.add('active');
-      } else {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('tab-asset').classList.add('active');
-        renderChart();
-      }
-    }
+    window.onload = function() {
+      loadStoredData();
+    };
 
-    // 1. 日常収支のロジック
-    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-    const kForm = document.getElementById('kakeibo-form');
-    const kDate = document.getElementById('k-date');
-    const kType = document.getElementById('k-type');
-    const kCategory = document.getElementById('k-category');
-    const kAmount = document.getElementById('k-amount');
-    const kMemo = document.getElementById('k-memo');
-    const kList = document.getElementById('k-transaction-list');
-
-    kDate.valueAsDate = new Date();
-
-    function initKakeibo() {
-      renderKakeiboSummary();
-      renderKakeiboList();
-    }
-
-    kForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const item = {
-        id: Date.now(),
-        date: kDate.value,
-        type: kType.value,
-        category: kCategory.value,
-        amount: Number(kAmount.value),
-        memo: kMemo.value
-      };
-      transactions.unshift(item);
-      localStorage.setItem('transactions', JSON.stringify(transactions));
-      initKakeibo();
-
-      kCategory.value = '';
-      kAmount.value = '';
-      kMemo.value = '';
-    });
-
-    function deleteKakeiboItem(id) {
-      transactions = transactions.filter(item => item.id !== id);
-      localStorage.setItem('transactions', JSON.stringify(transactions));
-      initKakeibo();
-    }
-
-    function renderKakeiboSummary() {
-      const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-      const expense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-      const balance = income - expense;
-
-      document.getElementById('k-total-income').textContent = `¥${income.toLocaleString()}`;
-      document.getElementById('k-total-expense').textContent = `¥${expense.toLocaleString()}`;
-      document.getElementById('k-total-balance').textContent = `¥${balance.toLocaleString()}`;
-    }
-
-    function renderKakeiboList() {
-      kList.innerHTML = '';
-      if (transactions.length === 0) {
-        kList.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">データがありません</td></tr>';
-        return;
-      }
-      transactions.forEach(t => {
-        const tr = document.createElement('tr');
-        const isIncome = t.type === 'income';
-        tr.innerHTML = `
-          <td>${t.date}</td>
-          <td class="${isIncome ? 'type-income' : 'type-expense'}">${isIncome ? '収入' : '支出'}</td>
-          <td>${escapeHtml(t.category)}</td>
-          <td>¥${t.amount.toLocaleString()}</td>
-          <td>${escapeHtml(t.memo || '-')}</td>
-          <td><button class="btn-delete" onclick="deleteKakeiboItem(${t.id})">✕</button></td>
-        `;
-        kList.appendChild(tr);
-      });
-    }
-
-    function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    }
-
-    // 2. 資産グラフのロジック
-    let assetData = JSON.parse(localStorage.getItem('assetHistory')) || [];
-    let chartInstance = null;
-
-    const aForm = document.getElementById('asset-form');
-    const aMonth = document.getElementById('a-month');
-    const aAmount = document.getElementById('a-amount');
-    const csvFileInput = document.getElementById('csv-file');
-
-    const now = new Date();
-    aMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-    function initAsset() {
-      assetData.sort((a, b) => new Date(a.month) - new Date(b.month));
-      renderAssetSummary();
-      renderAssetTable();
-      renderChart();
-    }
-
-    aForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const month = aMonth.value;
-      const amount = Number(aAmount.value);
-
-      const existingIndex = assetData.findIndex(d => d.month === month);
-      if (existingIndex !== -1) {
-        assetData[existingIndex].amount = amount;
-      } else {
-        assetData.push({ month, amount });
-      }
-
-      localStorage.setItem('assetHistory', JSON.stringify(assetData));
-      initAsset();
-      aAmount.value = '';
-    });
-
-    // CSVインポート処理
-    csvFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
+    function importCSV(event) {
+      const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target.result;
-        const lines = text.split(/\r\n|\n/);
-        let count = 0;
-
-        lines.forEach(line => {
-          if (!line.trim()) return;
-          const cols = line.split(',');
-          if (cols.length >= 2) {
-            let month = cols[0].trim().replace(/\//g, '-'); // YYYY/MM -> YYYY-MM
-            let amount = Number(cols[1].trim().replace(/[^0-9.-]/g, '')); // 記号やカンマを除去
-
-            // 「YYYY-MM」形式かチェック（簡易的）
-            if (/^\d{4}-\d{2}$/.test(month) && !isNaN(amount)) {
-              const existingIndex = assetData.findIndex(d => d.month === month);
-              if (existingIndex !== -1) {
-                assetData[existingIndex].amount = amount;
-              } else {
-                assetData.push({ month, amount });
-              }
-              count++;
-            }
-          }
-        });
-
-        localStorage.setItem('assetHistory', JSON.stringify(assetData));
-        initAsset();
-        alert(`${count} 件のデータをインポートしました！`);
-        csvFileInput.value = ''; // 入力クリア
+      reader.onload = function(e) {
+        const text = e.target.result;
+        parseAndSaveCSV(text);
       };
-
       reader.readAsText(file, 'UTF-8');
-    });
-
-    function deleteAssetData(month) {
-      assetData = assetData.filter(d => d.month !== month);
-      localStorage.setItem('assetHistory', JSON.stringify(assetData));
-      initAsset();
     }
 
-    function renderAssetSummary() {
-      const latestEl = document.getElementById('a-latest-asset');
-      const badgeEl = document.getElementById('a-trend-badge');
-
-      if (assetData.length === 0) {
-        latestEl.textContent = '¥0';
-        badgeEl.textContent = 'データなし';
-        return;
-      }
-
-      const latest = assetData[assetData.length - 1];
-      latestEl.textContent = `¥${latest.amount.toLocaleString()}`;
-
-      if (assetData.length > 1) {
-        const previous = assetData[assetData.length - 2];
-        const diff = latest.amount - previous.amount;
-        const percent = ((diff / previous.amount) * 100).toFixed(1);
-
-        if (diff >= 0) {
-          badgeEl.textContent = `前月比 +¥${diff.toLocaleString()} (+${percent}%)`;
-          badgeEl.style.color = '#38bdf8';
-        } else {
-          badgeEl.textContent = `前月比 -¥${Math.abs(diff).toLocaleString()} (${percent}%)`;
-          badgeEl.style.color = '#f43f5e';
+    function parseAndSaveCSV(text) {
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      const data = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        if (cols.length >= 4) {
+          data.push({
+            date: cols[0],
+            item: cols[1],
+            category: cols[2],
+            amount: parseInt(cols[3], 10) || 0,
+            type: cols[4] || (parseInt(cols[3], 10) < 0 ? '支出' : '収入')
+          });
         }
-      } else {
-        badgeEl.textContent = '最初の記録';
+      }
+
+      localStorage.setItem('kakeibo_data', JSON.stringify(data));
+      render(data);
+    }
+
+    function loadStoredData() {
+      const raw = localStorage.getItem('kakeibo_data');
+      if (raw) {
+        render(JSON.parse(raw));
       }
     }
 
-    function renderAssetTable() {
-      const aList = document.getElementById('a-history-list');
-      aList.innerHTML = '';
-      const sortedDesc = [...assetData].reverse();
+    function clearData() {
+      if (confirm('保存されているデータをすべて削除しますか？')) {
+        localStorage.removeItem('kakeibo_data');
+        location.reload();
+      }
+    }
 
-      if (sortedDesc.length === 0) {
-        aList.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-muted);">データがありません</td></tr>';
+    function render(data) {
+      let income = 0;
+      let expense = 0;
+      const categories = {};
+      const tbody = document.getElementById('dataTable');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">データがありません</td></tr>';
         return;
       }
 
-      sortedDesc.forEach(item => {
+      data.forEach(row => {
+        const amt = Math.abs(row.amount);
+        if (row.amount > 0 || row.type === '収入') {
+          income += amt;
+        } else {
+          expense += amt;
+          categories[row.category] = (categories[row.category] || 0) + amt;
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${item.month}</td>
-          <td>¥${item.amount.toLocaleString()}</td>
-          <td><button class="btn-delete" onclick="deleteAssetData('${item.month}')">✕</button></td>
+          <td>${row.date}</td>
+          <td>${row.item}</td>
+          <td>${row.category}</td>
+          <td style="color: ${row.amount < 0 || row.type==='支出' ? '#ef4444' : '#10b981'}; font-weight:bold;">
+            ${row.amount < 0 || row.type==='支出' ? '-' : '+'}¥${amt.toLocaleString()}
+          </td>
         `;
-        aList.appendChild(tr);
+        tbody.appendChild(tr);
       });
+
+      document.getElementById('incomeVal').innerText = `¥${income.toLocaleString()}`;
+      document.getElementById('expenseVal').innerText = `¥${expense.toLocaleString()}`;
+
+      renderChart(categories);
     }
 
-    function renderChart() {
-      const ctx = document.getElementById('assetChart').getContext('2d');
-      const labels = assetData.map(d => d.month);
-      const dataValues = assetData.map(d => d.amount);
+    function renderChart(categories) {
+      const ctx = document.getElementById('expenseChart').getContext('2d');
+      const labels = Object.keys(categories);
+      const values = Object.values(categories);
 
-      const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-      gradient.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
-      gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      if (myChart) myChart.destroy();
 
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
+      myChart = new Chart(ctx, {
+        type: 'doughnut',
         data: {
           labels: labels,
           datasets: [{
-            label: '総資産',
-            data: dataValues,
-            borderColor: '#38bdf8',
-            borderWidth: 3,
-            backgroundColor: gradient,
-            fill: true,
-            tension: 0.2,
-            pointBackgroundColor: '#818cf8',
-            pointRadius: labels.length > 36 ? 2 : 4 // データ点が多い場合はドットを小さく調整
+            data: values,
+            backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b']
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-            y: {
-              grid: { color: '#334155' },
-              ticks: {
-                color: '#94a3b8',
-                callback: (value) => '¥' + (value / 10000).toLocaleString() + '万'
-              }
-            }
+          plugins: {
+            legend: { position: 'bottom' }
           }
         }
       });
     }
-
-    // 初期起動
-    initKakeibo();
-    initAsset();
   </script>
 </body>
 </html>
