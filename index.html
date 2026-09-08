@@ -7,38 +7,43 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --primary: #2563eb;
-      --asset-color: #10b981;
-      --expected-color: #3b82f6;
-      --loan-color: #ef4444;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #1e293b;
-      --border: #e2e8f0;
+      --bg: #0f172a;           /* 深みのあるダークバックグラウンド */
+      --card-bg: #1e293b;      /* カード背景色（ダークグレー/ブラック） */
+      --text-main: #f8fafc;    /* メイン文字色（ホワイト） */
+      --text-sub: #94a3b8;     /* サブ文字色（グレー） */
+      --border: #334155;       /* 境界線 */
+      
+      /* ネオンカラー定義 */
+      --neon-asset: #00ff9d;   /* ネオンエメラルド（資産） */
+      --neon-expected: #00d8ff;/* ネオンシアン（想定資産） */
+      --neon-loan: #ff0055;    /* ネオンピンク（残ローン） */
     }
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
-      color: var(--text);
+      color: var(--text-main);
       margin: 0;
       padding: 12px;
     }
     .header {
-      background: var(--primary);
+      background: linear-gradient(135deg, #1e1b4b, #0f172a);
       color: #fff;
       padding: 16px;
       border-radius: 12px;
       text-align: center;
       margin-bottom: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    .header h1 { margin: 0; font-size: 1.25rem; }
+    .header h1 { margin: 0; font-size: 1.25rem; letter-spacing: 1px; }
     .card {
       background: var(--card-bg);
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 16px;
       border: 1px solid var(--border);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     .card-title {
       font-weight: bold;
@@ -47,18 +52,25 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      color: var(--text-main);
     }
     .btn-reload {
-      background: #f1f5f9;
+      background: #0f172a;
+      color: var(--text-sub);
       border: 1px solid var(--border);
       padding: 6px 12px;
       border-radius: 6px;
       font-size: 0.8rem;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-reload:active {
+      color: #fff;
+      border-color: var(--neon-expected);
     }
     .current-date {
       font-size: 0.8rem;
-      color: #64748b;
+      color: var(--text-sub);
       font-weight: normal;
     }
     .summary-grid {
@@ -67,13 +79,19 @@
       gap: 8px;
     }
     .summary-item {
-      background: #f1f5f9;
+      background: #0f172a;
       padding: 12px 8px;
       border-radius: 8px;
       text-align: center;
+      border: 1px solid #1e293b;
     }
-    .summary-label { font-size: 0.75rem; color: #64748b; font-weight: bold; }
-    .summary-value { font-size: 0.95rem; font-weight: bold; margin-top: 6px; }
+    .summary-label { font-size: 0.75rem; color: var(--text-sub); font-weight: bold; }
+    .summary-value { 
+      font-size: 0.95rem; 
+      font-weight: bold; 
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
 
     /* グラフ領域 */
     .chart-container {
@@ -101,15 +119,15 @@
     <div class="summary-grid">
       <div class="summary-item">
         <div class="summary-label">資産</div>
-        <div class="summary-value" id="assetVal" style="color: var(--asset-color);">--</div>
+        <div class="summary-value" id="assetVal" style="color: var(--neon-asset);">--</div>
       </div>
       <div class="summary-item">
         <div class="summary-label">想定資産</div>
-        <div class="summary-value" id="expectedVal" style="color: var(--expected-color);">--</div>
+        <div class="summary-value" id="expectedVal" style="color: var(--neon-expected);">--</div>
       </div>
       <div class="summary-item">
         <div class="summary-label">残ローン</div>
-        <div class="summary-value" id="loanVal" style="color: var(--loan-color);">--</div>
+        <div class="summary-value" id="loanVal" style="color: var(--neon-loan);">--</div>
       </div>
     </div>
   </div>
@@ -164,7 +182,7 @@
       // 日付順にソート
       data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // 今月（2026/09）以前の中で最新のデータを取得して「現在の状況」に表示
+      // 今月以前の中で最新のデータを取得して「現在の状況」に表示
       const today = new Date();
       const currentYM = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}`;
       
@@ -188,7 +206,6 @@
 
       const labels = data.map(d => formatDate(d.date));
       
-      // 未入力（空欄・null）のものは null のまま渡し、線を描画しない設定（spanGaps: false）
       const parseValue = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
 
       const assetData = data.map(d => parseValue(d.asset));
@@ -196,6 +213,10 @@
       const loanData = data.map(d => parseValue(d.loan));
 
       if (myChart) myChart.destroy();
+
+      // チャート全体のデフォルト文字色を白系に設定
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.borderColor = '#334155';
 
       myChart = new Chart(ctx, {
         type: 'line',
@@ -205,28 +226,31 @@
             {
               label: '資産',
               data: assetData,
-              borderColor: '#10b981',
-              backgroundColor: '#10b981',
-              borderWidth: 2,
-              pointRadius: 4,
-              spanGaps: false // データが無い部分は線を結ばない
+              borderColor: '#00ff9d',       // ネオンエメラルド
+              backgroundColor: '#00ff9d',
+              borderWidth: 1.5,             // 細めの線
+              pointRadius: 3,               // 細めのポイント
+              pointHoverRadius: 6,
+              spanGaps: false
             },
             {
               label: '想定資産',
               data: expectedData,
-              borderColor: '#3b82f6',
-              backgroundColor: '#3b82f6',
-              borderWidth: 2,
-              pointRadius: 4,
+              borderColor: '#00d8ff',       // ネオンシアン
+              backgroundColor: '#00d8ff',
+              borderWidth: 1.5,
+              pointRadius: 3,
+              pointHoverRadius: 6,
               spanGaps: false
             },
             {
               label: '残ローン',
               data: loanData,
-              borderColor: '#ef4444',
-              backgroundColor: '#ef4444',
-              borderWidth: 2,
-              pointRadius: 4,
+              borderColor: '#ff0055',       // ネオンピンク
+              backgroundColor: '#ff0055',
+              borderWidth: 1.5,
+              pointRadius: 3,
+              pointHoverRadius: 6,
               spanGaps: false
             }
           ]
@@ -235,12 +259,31 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom' }
+            legend: { 
+              position: 'bottom',
+              labels: {
+                color: '#f8fafc',
+                padding: 16
+              }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#f8fafc',
+              borderColor: '#334155',
+              borderWidth: 1
+            }
           },
           scales: {
+            x: {
+              grid: { color: '#1e293b' },
+              ticks: { color: '#94a3b8' }
+            },
             y: {
               beginAtZero: true,
+              grid: { color: '#334155' },
               ticks: {
+                color: '#94a3b8',
                 callback: function(value) {
                   return '¥' + (value / 10000).toLocaleString() + '万';
                 }
