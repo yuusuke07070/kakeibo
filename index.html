@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>全財産ダッシュボード</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -19,6 +19,11 @@
       --neon-loan: #ff0055;    /* ネオンピンク（残ローン） */
     }
     * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden; /* 画面全体の横スクロールを防止 */
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
@@ -29,26 +34,27 @@
     .header {
       background: linear-gradient(135deg, #1e1b4b, #0f172a);
       color: #fff;
-      padding: 16px;
+      padding: 14px 12px;
       border-radius: 12px;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    .header h1 { margin: 0; font-size: 1.25rem; letter-spacing: 1px; }
+    .header h1 { margin: 0; font-size: 1.15rem; letter-spacing: 1px; }
     .card {
       background: var(--card-bg);
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 14px 12px;
+      margin-bottom: 12px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      width: 100%;
     }
     .card-title {
       font-weight: bold;
       margin-bottom: 12px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -72,25 +78,61 @@
       font-size: 0.8rem;
       color: var(--text-sub);
       font-weight: normal;
+      display: inline-block;
+      margin-left: 4px;
     }
+
+    /* 状況表示カードのレイアウト（スマホ最適化） */
     .summary-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr; /* スマホでは1列（縦並び）で余裕を持たせる */
       gap: 8px;
     }
+    
+    /* PC・タブレットなど広い画面では横3列にする */
+    @media (min-width: 480px) {
+      .summary-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+
     .summary-item {
       background: #0f172a;
-      padding: 12px 8px;
+      padding: 10px 12px;
       border-radius: 8px;
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border: 1px solid #1e293b;
     }
-    .summary-label { font-size: 0.75rem; color: var(--text-sub); font-weight: bold; }
-    .summary-value { 
-      font-size: 0.95rem; 
+    
+    @media (min-width: 480px) {
+      .summary-item {
+        display: block;
+        text-align: center;
+      }
+    }
+
+    .summary-label { 
+      font-size: 0.8rem; 
+      color: var(--text-sub); 
       font-weight: bold; 
-      margin-top: 6px;
+      white-space: nowrap;
+    }
+    
+    .summary-value { 
+      font-size: clamp(0.95rem, 4.5vw, 1.2rem); /* 画面幅に合わせて自動伸縮 */
+      font-weight: bold; 
       letter-spacing: 0.5px;
+      word-break: break-all;
+      text-align: right;
+    }
+
+    @media (min-width: 480px) {
+      .summary-value {
+        text-align: center;
+        margin-top: 6px;
+      }
     }
 
     /* 横スクロール対応のグラフ領域設定 */
@@ -101,7 +143,7 @@
     }
     .chart-container {
       position: relative;
-      height: 320px;
+      height: 300px;
       min-width: 100%;
     }
   </style>
@@ -213,8 +255,8 @@
       const wrapper = document.getElementById('scrollWrapper');
       const ctx = document.getElementById('assetChart').getContext('2d');
 
-      // 1データ点につき70pxの幅を割り当て、スクロール域を自動計算
-      const minPointWidth = 70;
+      // 1データ点につき60pxの幅を割り当て、スクロール域を自動計算
+      const minPointWidth = 60;
       const calculatedWidth = data.length * minPointWidth;
       const finalWidth = Math.max(calculatedWidth, wrapper.clientWidth);
       container.style.width = finalWidth + 'px';
