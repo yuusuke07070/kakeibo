@@ -1,150 +1,352 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>全財産ダッシュボード</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root {
-      --bg: #0f172a;           /* 深みのあるダークバックグラウンド */
-      --card-bg: #1e293b;      /* カード背景色（ダークグレー/ブラック） */
-      --text-main: #f8fafc;    /* メイン文字色（ホワイト） */
-      --text-sub: #94a3b8;      /* サブ文字色（グレー） */
-      --border: #334155;       /* 境界線 */
-      
-      /* ネオンカラー定義 */
-      --neon-asset: #00ff9d;   /* ネオンエメラルド（資産） */
-      --neon-expected: #00d8ff;/* ネオンシアン（想定資産） */
-      --neon-loan: #ff0055;    /* ネオンピンク（残ローン） */
-    }
-    * { box-sizing: border-box; }
-    html, body {
-      width: 100%;
-      max-width: 100vw;
-      overflow-x: hidden; /* 画面全体の横スクロールを防止 */
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text-main);
-      margin: 0;
-      padding: 12px;
-    }
-    .header {
-      background: linear-gradient(135deg, #1e1b4b, #0f172a);
-      color: #fff;
-      padding: 14px 12px;
-      border-radius: 12px;
-      text-align: center;
-      margin-bottom: 12px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-    .header h1 { margin: 0; font-size: 1.15rem; letter-spacing: 1px; }
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 14px 12px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      width: 100%;
-    }
-    .card-title {
-      font-weight: bold;
-      margin-bottom: 12px;
-      font-size: 0.95rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: var(--text-main);
-    }
-    .current-date {
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      font-weight: normal;
-      display: inline-block;
-      margin-left: 4px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>総合ダッシュボード（資産管理 ＆ 家計簿）</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f8fafc;
+  --text-sub: #94a3b8;
+  --border: #334155;
+  --accent: #00ff9d;
+  --accent-hover: #00cc7d;
+  --danger: #ff0055;
+  --danger-hover: #d90048;
+  --neon-asset: #00ff9d;
+  --neon-expected: #00d8ff;
+  --neon-loan: #ff0055;
+}
+* { box-sizing: border-box; }
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-main);
+  margin: 0;
+  padding: 12px;
+}
+.header {
+  background: linear-gradient(135deg, #1e1b4b, #0f172a);
+  color: #fff;
+  padding: 14px 12px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.header h1 { margin: 0; font-size: 1.15rem; letter-spacing: 1px; }
 
-    /* 状況表示カードのレイアウト（スマホ最適化） */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-    
-    @media (min-width: 480px) {
-      .summary-grid {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
-    }
+/* タブ切り替えスタイル */
+.tab-container {
+  display: flex;
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.tab-btn.active {
+  background: var(--accent);
+  color: #0f172a;
+}
 
-    .summary-item {
-      background: #0f172a;
-      padding: 10px 12px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #1e293b;
-    }
-    
-    @media (min-width: 480px) {
-      .summary-item {
-        display: block;
-        text-align: center;
-      }
-    }
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
 
-    .summary-label { 
-      font-size: 0.8rem; 
-      color: var(--text-sub); 
-      font-weight: bold; 
-      white-space: nowrap;
-    }
-    
-    .summary-value { 
-      font-size: clamp(0.95rem, 4.5vw, 1.2rem);
-      font-weight: bold; 
-      letter-spacing: 0.5px;
-      word-break: break-all;
-      text-align: right;
-    }
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  width: 100%;
+}
+.card-title {
+  font-weight: bold;
+  margin-bottom: 14px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  border-left: 4px solid var(--accent);
+  padding-left: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.current-date {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  font-weight: normal;
+  display: inline-block;
+  margin-left: 4px;
+}
 
-    @media (min-width: 480px) {
-      .summary-value {
-        text-align: center;
-        margin-top: 6px;
-      }
-    }
+/* 資産管理用サマリーグリッド */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 480px) {
+  .summary-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.summary-item {
+  background: #0f172a;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #1e293b;
+}
+@media (min-width: 480px) {
+  .summary-item {
+    display: block;
+    text-align: center;
+  }
+}
+.summary-label { 
+  font-size: 0.8rem; 
+  color: var(--text-sub); 
+  font-weight: bold; 
+  white-space: nowrap;
+}
+.summary-value { 
+  font-size: clamp(0.95rem, 4.5vw, 1.2rem);
+  font-weight: bold; 
+  letter-spacing: 0.5px;
+  word-break: break-all;
+  text-align: right;
+}
+@media (min-width: 480px) {
+  .summary-value {
+    text-align: center;
+    margin-top: 6px;
+  }
+}
 
-    /* 横スクロール対応のグラフコンテナ構造 */
-    .chart-scroll-wrapper {
-      position: relative;
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .chart-container {
-      position: relative;
-      height: 540px;
-      min-width: 100%;
-    }
-    .chart-container canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+/* フォームスタイル */
+.form-group {
+  margin-bottom: 12px;
+}
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 10px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 1rem;
+}
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* カテゴリラジオボタングリッド */
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+@media (min-width: 480px) {
+  .category-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.category-item {
+  position: relative;
+}
+.category-item input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+.category-label {
+  display: block;
+  padding: 10px 6px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.category-item input[type="radio"]:checked + .category-label {
+  background: rgba(0, 255, 157, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: bold;
+}
+
+/* 送信ボタン */
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent);
+  color: #0f172a;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 6px;
+}
+.submit-btn:hover { background: var(--accent-hover); }
+.submit-btn:disabled { background: var(--text-sub); cursor: not-allowed; }
+
+/* テーブル共通 */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+.data-table th, .data-table td {
+  padding: 8px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.data-table th {
+  color: var(--text-sub);
+  font-size: 0.75rem;
+  background: #0f172a;
+}
+.data-table th:last-child, .data-table td:last-child {
+  text-align: center;
+  width: 50px;
+}
+.data-table td:nth-child(4) {
+  text-align: right;
+}
+.data-table th:nth-child(4) {
+  text-align: right;
+}
+.total-row td {
+  font-weight: bold;
+  color: var(--accent);
+  border-top: 2px solid var(--accent);
+  border-bottom: none;
+  background: rgba(0,255,157,0.05);
+}
+
+/* 削除ボタン */
+.delete-btn {
+  background: rgba(255, 0, 85, 0.15);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.delete-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* グラフ関連 */
+.chart-scroll-wrapper {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.chart-container {
+  position: relative;
+  height: 300px;
+  min-width: 100%;
+}
+.chart-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.donut-container {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  margin-top: 15px;
+}
+.donut-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#loadingMsg {
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+.badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #334155;
+  color: var(--text-main);
+  display: inline-block;
+}
+</style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>全財産ダッシュボード</h1>
-  </div>
+<div class="header">
+  <h1>総合ダッシュボード</h1>
+</div>
 
+<!-- タブ切り替えボタン -->
+<div class="tab-container">
+  <button class="tab-btn active" onclick="switchTab('asset')">📈 全資産管理</button>
+  <button class="tab-btn" onclick="switchTab('receipt')">📝 レシート・家計簿</button>
+</div>
+
+<!-- ================= 1. 全資産管理タブ ================= -->
+<div id="tab-asset" class="tab-content active">
   <!-- 当月の最新状況カード -->
   <div class="card">
     <div class="card-title">
@@ -178,194 +380,637 @@
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsxsld_XVrxfKKN7uSbFbEDi6csd1hx-J8eOZf5u0C5oSIWbEud8UW5TuuPcxnM50/exec";
+<!-- ================= 2. レシート・家計簿タブ ================= -->
+<div id="tab-receipt" class="tab-content">
+  <!-- レシート入力カード -->
+  <div class="card">
+    <div class="card-title">📝 レシート・支出登録</div>
+    <form id="receiptForm">
+      <div class="form-group">
+        <label class="form-label">日付 (MM/DD または 4桁mmdd)</label>
+        <input type="text" id="dateInput" class="form-input" placeholder="例: 0907 または 9/7" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">品物</label>
+        <input type="text" id="itemInput" class="form-input" placeholder="例: スーパーの食材、コーヒーなど" required>
+      </div>
 
-    let myChart = null;
+      <div class="form-group">
+        <label class="form-label">金額 (円)</label>
+        <input type="number" id="amountInput" class="form-input" placeholder="半角数字で入力" min="0" required>
+      </div>
 
-    window.addEventListener('DOMContentLoaded', () => {
-      fetchSheetData();
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <div class="category-grid">
+          <div class="category-item"><input type="radio" id="cat1" name="category" value="食費-自炊"><label class="category-label" for="cat1">食費-自炊</label></div>
+          <div class="category-item"><input type="radio" id="cat2" name="category" value="食費-外食"><label class="category-label" for="cat2">食費-外食</label></div>
+          <div class="category-item"><input type="radio" id="cat3" name="category" value="趣向品-お菓子/アイス"><label class="category-label" for="cat3">趣向品-お菓子/アイス</label></div>
+          <div class="category-item"><input type="radio" id="cat4" name="category" value="生活"><label class="category-label" for="cat4">生活</label></div>
+          <div class="category-item"><input type="radio" id="cat5" name="category" value="子供"><label class="category-label" for="cat5">子供</label></div>
+          <div class="category-item"><input type="radio" id="cat6" name="category" value="衣服"><label class="category-label" for="cat6">衣服</label></div>
+          <div class="category-item"><input type="radio" id="cat7" name="category" value="美容/医療"><label class="category-label" for="cat7">美容/医療</label></div>
+          <div class="category-item"><input type="radio" id="cat8" name="category" value="ガソリン"><label class="category-label" for="cat8">ガソリン</label></div>
+          <div class="category-item"><input type="radio" id="cat9" name="category" value="お小遣い-祐介"><label class="category-label" for="cat9">お小遣い-祐介</label></div>
+          <div class="category-item"><input type="radio" id="cat10" name="category" value="お小遣い-瞳"><label class="category-label" for="cat10">お小遣い-瞳</label></div>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">登録する</button>
+      <div id="loadingMsg"></div>
+    </form>
+  </div>
+
+  <!-- 集計・グラフカード -->
+  <div class="card">
+    <div class="card-title">
+      <span>📊 カテゴリ別集計</span>
+      <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-sub);">
+        対象月: 
+        <select id="monthFilter" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;">
+          <option value="ALL">全期間</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>カテゴリ</th>
+            <th>合計金額</th>
+          </tr>
+        </thead>
+        <tbody id="summaryTableBody">
+          <tr><td colspan="2" style="text-align: center; color: var(--text-sub);">データを読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ドーナツグラフエリア -->
+    <div class="donut-container">
+      <canvas id="categoryChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 該当月明細カード -->
+  <div class="card">
+    <div class="card-title">
+      <span>📋 レシート明細一覧</span>
+      <div>
+        <select id="sortOrder" class="form-select" style="padding:4px 8px; font-size:0.80rem; width:auto; display:inline-block;">
+          <option value="date-desc">年月・日付順 (新しい順)</option>
+          <option value="date-asc">年月・日付順 (古い順)</option>
+          <option value="input-order">入力順 (登録順)</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x: auto; max-height: 380px; overflow-y: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>カテゴリ</th>
+            <th>品物</th>
+            <th>金額</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="detailTableBody">
+          <tr><td colspan="5" style="text-align: center; color: var(--text-sub);">データがありません</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsxsld_XVrxfKKN7uSbFbEDi6csd1hx-J8eOZf5u0C5oSIWbEud8UW5TuuPcxnM50/exec";
+
+  let assetChartInstance = null;
+  let categoryChartInstance = null;
+  let allReceiptData = [];
+  let assetSheetData = [];
+
+  // タブ切り替え関数
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    if (tabName === 'asset') {
+      document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+      document.getElementById('tab-asset').classList.add('active');
+      // タブ切り替え時にグラフの表示崩れを防ぐためリサイズトリガー
+      if (assetChartInstance) assetChartInstance.resize();
+    } else if (tabName === 'receipt') {
+      document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+      document.getElementById('tab-receipt').classList.add('active');
+      if (categoryChartInstance) categoryChartInstance.resize();
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    // レシート入力日の初期値（今日）
+    const now = new Date();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    document.getElementById('dateInput').value = `${m}/${d}`;
+
+    // カテゴリ未選択状態にリセット
+    document.querySelectorAll('input[name="category"]').forEach(radio => radio.checked = false);
+
+    document.getElementById('monthFilter').addEventListener('change', updateView);
+    document.getElementById('sortOrder').addEventListener('change', updateDetailTable);
+
+    // 各データ取得
+    fetchAssetData();
+    fetchReceiptData();
+  });
+
+  // --- 全資産データの処理 ---
+  function fetchAssetData() {
+    fetch(GAS_API_URL)
+      .then(response => response.json())
+      .then(data => {
+        assetSheetData = data;
+        renderAssetDashboard(data);
+      })
+      .catch(error => {
+        console.error('Asset Fetch Error:', error);
+      });
+  }
+
+  function formatAssetDate(dStr) {
+    if (!dStr) return '';
+    const d = new Date(dStr);
+    if (isNaN(d.getTime())) return String(dStr).substring(0, 7);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}/${month}`;
+  }
+
+  function formatMoney(val) {
+    if (val === null || val === undefined || val === '' || isNaN(Number(val))) return '設定なし';
+    return `¥${Number(val).toLocaleString()}`;
+  }
+
+  function renderAssetDashboard(data) {
+    if (!data || data.length === 0) return;
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const today = new Date();
+    const currentYM = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+    const pastOrCurrentData = data.filter(d => formatAssetDate(d.date) <= currentYM);
+    const currentData = pastOrCurrentData.length > 0 ? pastOrCurrentData[pastOrCurrentData.length - 1] : data[0];
+
+    document.getElementById('targetMonth').innerText = `(${formatAssetDate(currentData.date)} 時点)`;
+    document.getElementById('assetVal').innerText = formatMoney(currentData.asset);
+    document.getElementById('expectedVal').innerText = formatMoney(currentData.expected);
+    document.getElementById('loanVal').innerText = formatMoney(currentData.loan);
+
+    requestAnimationFrame(() => {
+      renderAssetChart(data);
+    });
+  }
+
+  function renderAssetChart(data) {
+    const container = document.getElementById('chartArea');
+    const wrapper = document.getElementById('scrollWrapper');
+    const ctx = document.getElementById('assetChart').getContext('2d');
+
+    const pointWidth = 8;
+    const calculatedWidth = (data.length * pointWidth) + 80;
+    const wrapperWidth = wrapper.clientWidth || window.innerWidth;
+    const finalWidth = Math.max(calculatedWidth, wrapperWidth);
+    container.style.width = finalWidth + 'px';
+
+    const labels = data.map(d => formatAssetDate(d.date));
+    const parseValue = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
+
+    const assetData = data.map(d => parseValue(d.asset));
+    const expectedData = data.map(d => parseValue(d.expected));
+    const loanData = data.map(d => parseValue(d.loan));
+
+    if (assetChartInstance) assetChartInstance.destroy();
+
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = '#334155';
+
+    assetChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: '資産',
+            data: assetData,
+            borderColor: '#00ff9d',
+            backgroundColor: '#00ff9d',
+            borderWidth: 1.5,
+            pointRadius: 1.5,
+            pointHoverRadius: 4,
+            spanGaps: false
+          },
+          {
+            label: '想定資産',
+            data: expectedData,
+            borderColor: '#00d8ff',
+            backgroundColor: '#00d8ff',
+            borderWidth: 1.5,
+            pointRadius: 1.5,
+            pointHoverRadius: 4,
+            spanGaps: false
+          },
+          {
+            label: '残ローン',
+            data: loanData,
+            borderColor: '#ff0055',
+            backgroundColor: '#ff0055',
+            borderWidth: 1.5,
+            pointRadius: 1.5,
+            pointHoverRadius: 4,
+            spanGaps: false
+          }
+        ]
+      },
+      options: {
+        clip: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 15, bottom: 0, left: 20, right: 20 } },
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#f8fafc', padding: 12 } },
+          tooltip: { backgroundColor: '#0f172a', titleColor: '#f8fafc', bodyColor: '#f8fafc', borderColor: '#334155', borderWidth: 1 }
+        },
+        scales: {
+          x: {
+            grid: { color: '#1e293b' },
+            ticks: { 
+              color: '#94a3b8', autoSkip: false, minRotation: 90, maxRotation: 90,
+              callback: function(val, index) { return index % 3 === 0 ? this.getLabelForValue(val) : ''; }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            max: 40000000,
+            grid: { color: '#334155' },
+            ticks: {
+              color: '#94a3b8', stepSize: 2000000, autoSkip: false, font: { size: 11 },
+              callback: function(value) { return '¥' + (value / 10000).toLocaleString() + '万'; }
+            }
+          }
+        }
+      }
+    });
+    wrapper.scrollLeft = 0;
+  }
+
+  // --- レシート・家計簿データの処理 ---
+  document.getElementById('receiptForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const dateStr = document.getElementById('dateInput').value.trim();
+    const item = document.getElementById('itemInput').value.trim();
+    const amount = Number(document.getElementById('amountInput').value);
+    const selectedCategory = document.querySelector('input[name="category"]:checked');
+
+    if (!selectedCategory) {
+      alert('カテゴリを選択してください。');
+      return;
+    }
+    const category = selectedCategory.value;
+
+    const parsedDate = parseDateInputToYYYYMMDD(dateStr);
+    if (!parsedDate) {
+      alert('日付の形式は「MM/DD」（例: 09/07）または「4桁数字」（例: 0907）で入力してください。');
+      return;
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingMsg = document.getElementById('loadingMsg');
+    
+    submitBtn.disabled = true;
+    submitBtn.innerText = '送信中...';
+    loadingMsg.innerText = 'スプレッドシートに登録しています...';
+
+    const payload = { date: parsedDate, item: item, amount: amount, category: category };
+
+    fetch(GAS_API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => {
+      if(res.status === 'success') {
+        loadingMsg.innerText = '登録が完了しました！';
+        document.getElementById('itemInput').value = '';
+        document.getElementById('amountInput').value = '';
+        document.querySelectorAll('input[name="category"]').forEach(radio => radio.checked = false);
+
+        fetchReceiptData();
+      } else {
+        alert('エラーが発生しました: ' + (res.message || '不明なエラー'));
+        loadingMsg.innerText = '';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('通信エラーが発生しました。');
+      loadingMsg.innerText = '';
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.innerText = '登録する';
+      setTimeout(() => { loadingMsg.innerText = ''; }, 3000);
+    });
+  });
+
+  function deleteReceipt(rowIndex) {
+    if (!confirm('この明細を削除してもよろしいですか？')) return;
+
+    const payload = { action: "delete", rowIndex: rowIndex };
+
+    fetch(GAS_API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.status === 'success') {
+        fetchReceiptData();
+      } else {
+        alert('削除に失敗しました: ' + (res.message || '不明なエラー'));
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('通信エラーが発生しました。');
+    });
+  }
+
+  function parseDateInputToYYYYMMDD(str) {
+    let m, d;
+    if (str.includes('/')) {
+      const parts = str.split('/');
+      if (parts.length !== 2) return null;
+      m = parseInt(parts[0], 10);
+      d = parseInt(parts[1], 10);
+    } else if (/^\d{3,4}$/.test(str)) {
+      if (str.length === 3) {
+        m = parseInt(str.substring(0, 1), 10);
+        d = parseInt(str.substring(1), 10);
+      } else {
+        m = parseInt(str.substring(0, 2), 10);
+        d = parseInt(str.substring(2), 10);
+      }
+    } else {
+      return null;
+    }
+
+    if (isNaN(m) || isNaN(d) || m < 1 || m > 12 || d < 1 || d > 31) return null;
+    
+    const year = new Date().getFullYear();
+    const mm = String(m).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    return `${year}-${mm}-${dd}`;
+  }
+
+  function formatDateToJP(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    const d = parseInt(parts[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return dateStr;
+    return `${y}年${m}月${d}日`;
+  }
+
+  function getYearMonth(dateStr) {
+    if (!dateStr) return '';
+    if (dateStr.length >= 7) return dateStr.substring(0, 7);
+    return '';
+  }
+
+  function fetchReceiptData() {
+    fetch(`${GAS_API_URL}?type=receipt`)
+      .then(res => res.json())
+      .then(data => {
+        allReceiptData = data.map((row, index) => {
+          let rawDate = row.date;
+          let dateObj;
+          let cleanDateStr = '';
+
+          if (typeof rawDate === 'string' && rawDate.includes('T')) {
+            dateObj = new Date(rawDate);
+          } else if (typeof rawDate === 'string' && rawDate.includes('-')) {
+            const parts = rawDate.substring(0, 10).split('-');
+            dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          } else {
+            dateObj = new Date(rawDate);
+          }
+
+          const y = dateObj.getFullYear();
+          const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const d = String(dateObj.getDate()).padStart(2, '0');
+          cleanDateStr = `${y}-${m}-${d}`;
+
+          return {
+            ...row,
+            date: cleanDateStr,
+            originalIndex: index,
+            dateObj: dateObj
+          };
+        });
+        
+        updateMonthFilterOptions();
+        updateView();
+      })
+      .catch(err => {
+        console.error('Receipt Data Fetch Error:', err);
+        document.getElementById('summaryTableBody').innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--danger);">データの取得に失敗しました</td></tr>';
+      });
+  }
+
+  function updateMonthFilterOptions() {
+    const monthFilter = document.getElementById('monthFilter');
+    const currentSelected = monthFilter.value;
+
+    const monthsSet = new Set();
+    allReceiptData.forEach(row => {
+      const ym = getYearMonth(row.date);
+      if (ym.length === 7) monthsSet.add(ym);
     });
 
-    function fetchSheetData() {
-      fetch(GAS_API_URL)
-        .then(response => response.json())
-        .then(data => {
-          render(data);
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+    const sortedMonths = Array.from(monthsSet).sort().reverse();
+
+    monthFilter.innerHTML = '<option value="ALL">全期間</option>';
+    sortedMonths.forEach(ym => {
+      const opt = document.createElement('option');
+      opt.value = ym;
+      const parts = ym.split('-');
+      opt.innerText = `${parts[0]}年${parseInt(parts[1], 10)}月`;
+      monthFilter.appendChild(opt);
+    });
+
+    const now = new Date();
+    const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    if (sortedMonths.includes(currentSelected)) {
+      monthFilter.value = currentSelected;
+    } else if (sortedMonths.includes(nowYM)) {
+      monthFilter.value = nowYM;
+    } else if (sortedMonths.length > 0) {
+      monthFilter.value = sortedMonths[0];
+    }
+  }
+
+  function updateView() {
+    const selectedMonth = document.getElementById('monthFilter').value;
+    const filteredData = allReceiptData.filter(row => {
+      if (selectedMonth === 'ALL') return true;
+      return getYearMonth(row.date) === selectedMonth;
+    });
+
+    updateSummary(filteredData);
+    updateDetailTable(filteredData);
+  }
+
+  function updateSummary(filteredData) {
+    const categories = [
+      "食費-自炊", "食費-外食", "趣向品-お菓子/アイス", "生活", "子供", 
+      "衣服", "美容/医療", "ガソリン", "お小遣い-祐介", "お小遣い-瞳"
+    ];
+    
+    const summary = {};
+    categories.forEach(cat => summary[cat] = 0);
+    let grandTotal = 0;
+
+    filteredData.forEach(row => {
+      const cat = row.category;
+      const amt = Number(row.amount) || 0;
+      if (summary[cat] !== undefined) {
+        summary[cat] += amt;
+      } else {
+        summary[cat] = (summary[cat] || 0) + amt;
+      }
+      grandTotal += amt;
+    });
+
+    const tbody = document.getElementById('summaryTableBody');
+    tbody.innerHTML = '';
+
+    const chartLabels = [];
+    const chartValues = [];
+
+    categories.forEach(cat => {
+      const amount = summary[cat];
+      chartLabels.push(cat);
+      chartValues.push(amount);
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${cat}</td><td>¥${amount.toLocaleString()}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    const totalTr = document.createElement('tr');
+    totalTr.className = 'total-row';
+    totalTr.innerHTML = `<td>合計</td><td>¥${grandTotal.toLocaleString()}</td>`;
+    tbody.appendChild(totalTr);
+
+    renderCategoryChart(chartLabels, chartValues);
+  }
+
+  function updateDetailTable(paramData) {
+    const selectedMonth = document.getElementById('monthFilter').value;
+    const filteredData = Array.isArray(paramData) ? paramData : allReceiptData.filter(row => {
+      if (selectedMonth === 'ALL') return true;
+      return getYearMonth(row.date) === selectedMonth;
+    });
+
+    const sortOrder = document.getElementById('sortOrder').value;
+    const sortedData = [...filteredData];
+    if (sortOrder === 'date-desc') {
+      sortedData.sort((a, b) => b.dateObj - a.dateObj || b.originalIndex - b.originalIndex);
+    } else if (sortOrder === 'date-asc') {
+      sortedData.sort((a, b) => a.dateObj - b.dateObj || a.originalIndex - b.originalIndex);
+    } else if (sortOrder === 'input-order') {
+      sortedData.sort((a, b) => a.originalIndex - b.originalIndex);
     }
 
-    // 日付整形 (YYYY/MM 形式)
-    function formatDate(dStr) {
-      if (!dStr) return '';
-      const d = new Date(dStr);
-      if (isNaN(d.getTime())) return String(dStr).substring(0, 7);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      return `${year}/${month}`;
+    const tbody = document.getElementById('detailTableBody');
+    tbody.innerHTML = '';
+
+    if (sortedData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">該当する明細はありません</td></tr>';
+      return;
     }
 
-    // 金額整形
-    function formatMoney(val) {
-      if (val === null || val === undefined || val === '' || isNaN(Number(val))) return '設定なし';
-      return `¥${Number(val).toLocaleString()}`;
-    }
+    sortedData.forEach(row => {
+      const tr = document.createElement('tr');
+      const displayDate = formatDateToJP(row.date);
+      tr.innerHTML = `
+        <td style="white-space: nowrap; color: var(--text-sub);">${displayDate}</td>
+        <td><span class="badge">${escapeHtml(row.category)}</span></td>
+        <td style="font-weight: bold;">${escapeHtml(row.item)}</td>
+        <td style="font-weight: bold; text-align: right;">¥${Number(row.amount).toLocaleString()}</td>
+        <td style="text-align: center;"><button class="delete-btn" onclick="deleteReceipt(${row.rowIndex})">🗑️ 削除</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-    function render(data) {
-      if (!data || data.length === 0) return;
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"]/g, function(match) {
+      const escape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+      return escape[match] || match;
+    });
+  }
 
-      // 日付順にソート
-      data.sort((a, b) => new Date(a.date) - new Date(b.date));
+  function renderCategoryChart(labels, values) {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    if (categoryChartInstance) categoryChartInstance.destroy();
 
-      // 今月以前の中で最新のデータを取得して「現在の状況」に表示
-      const today = new Date();
-      const currentYM = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}`;
-      
-      const pastOrCurrentData = data.filter(d => formatDate(d.date) <= currentYM);
-      const currentData = pastOrCurrentData.length > 0 
-        ? pastOrCurrentData[pastOrCurrentData.length - 1] 
-        : data[0];
+    const colors = [
+      '#00ff9d', '#00d8ff', '#ff0055', '#ff9900', '#9900ff', 
+      '#ffff00', '#00ffff', '#ff00ff', '#76ff03', '#ff6d00'
+    ];
 
-      // カード表示を更新
-      document.getElementById('targetMonth').innerText = `(${formatDate(currentData.date)} 時点)`;
-      document.getElementById('assetVal').innerText = formatMoney(currentData.asset);
-      document.getElementById('expectedVal').innerText = formatMoney(currentData.expected);
-      document.getElementById('loanVal').innerText = formatMoney(currentData.loan);
-
-      // レイアウト確定後に描画を実行
-      requestAnimationFrame(() => {
-        renderChart(data);
-      });
-    }
-
-    function renderChart(data) {
-      const container = document.getElementById('chartArea');
-      const wrapper = document.getElementById('scrollWrapper');
-      const ctx = document.getElementById('assetChart').getContext('2d');
-
-      // データ点数に応じた動的なグラフ幅計算（pointWidthを16から8に変更して半分の幅に調整）
-      const pointWidth = 8;
-      const calculatedWidth = (data.length * pointWidth) + 80;
-      const wrapperWidth = wrapper.clientWidth || window.innerWidth;
-      const finalWidth = Math.max(calculatedWidth, wrapperWidth);
-      
-      container.style.width = finalWidth + 'px';
-
-      const labels = data.map(d => formatDate(d.date));
-      
-      const parseValue = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
-
-      const assetData = data.map(d => parseValue(d.asset));
-      const expectedData = data.map(d => parseValue(d.expected));
-      const loanData = data.map(d => parseValue(d.loan));
-
-      if (myChart) myChart.destroy();
-
-      Chart.defaults.color = '#94a3b8';
-      Chart.defaults.borderColor = '#334155';
-
-      myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: '資産',
-              data: assetData,
-              borderColor: '#00ff9d',
-              backgroundColor: '#00ff9d',
-              borderWidth: 1.5,
-              pointRadius: 1.5,
-              pointHoverRadius: 4,
-              spanGaps: false
-            },
-            {
-              label: '想定資産',
-              data: expectedData,
-              borderColor: '#00d8ff',
-              backgroundColor: '#00d8ff',
-              borderWidth: 1.5,
-              pointRadius: 1.5,
-              pointHoverRadius: 4,
-              spanGaps: false
-            },
-            {
-              label: '残ローン',
-              data: loanData,
-              borderColor: '#ff0055',
-              backgroundColor: '#ff0055',
-              borderWidth: 1.5,
-              pointRadius: 1.5,
-              pointHoverRadius: 4,
-              spanGaps: false
-            }
-          ]
-        },
-        options: {
-          clip: false,
-          responsive: true,
-          maintainAspectRatio: false,
-          layout: {
-            padding: {
-              top: 15,
-              bottom: 0,
-              left: 20,
-              right: 20
-            }
+    categoryChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors,
+          borderColor: '#1e293b',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#f8fafc', boxWidth: 12, font: { size: 11 } }
           },
-          plugins: {
-            legend: { 
-              position: 'bottom',
-              labels: {
-                color: '#f8fafc',
-                padding: 12
-              }
-            },
-            tooltip: {
-              backgroundColor: '#0f172a',
-              titleColor: '#f8fafc',
-              bodyColor: '#f8fafc',
-              borderColor: '#334155',
-              borderWidth: 1
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: '#1e293b' },
-              ticks: { 
-                color: '#94a3b8',
-                autoSkip: false,
-                minRotation: 90,
-                maxRotation: 90,
-                callback: function(val, index) {
-                  return index % 3 === 0 ? this.getLabelForValue(val) : '';
-                }
-              }
-            },
-            y: {
-              beginAtZero: true,
-              max: 40000000,
-              grid: { color: '#334155' },
-              ticks: {
-                color: '#94a3b8',
-                stepSize: 2000000,
-                autoSkip: false,
-                font: {
-                  size: 11
-                },
-                callback: function(value) {
-                  return '¥' + (value / 10000).toLocaleString() + '万';
-                }
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return ` ${context.label}: ¥${context.raw.toLocaleString()}`;
               }
             }
           }
         }
-      });
-    }
-  </script>
+      }
+    });
+  }
+</script>
 </body>
 </html>
