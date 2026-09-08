@@ -503,7 +503,6 @@ body {
     if (tabName === 'asset') {
       document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
       document.getElementById('tab-asset').classList.add('active');
-      // タブ切り替え時にグラフの表示崩れを防ぐためリサイズトリガー
       if (assetChartInstance) assetChartInstance.resize();
     } else if (tabName === 'receipt') {
       document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
@@ -513,33 +512,36 @@ body {
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    // レシート入力日の初期値（今日）
     const now = new Date();
     const m = String(now.getMonth() + 1).padStart(2, '0');
     const d = String(now.getDate()).padStart(2, '0');
     document.getElementById('dateInput').value = `${m}/${d}`;
 
-    // カテゴリ未選択状態にリセット
     document.querySelectorAll('input[name="category"]').forEach(radio => radio.checked = false);
 
     document.getElementById('monthFilter').addEventListener('change', updateView);
     document.getElementById('sortOrder').addEventListener('change', updateDetailTable);
 
-    // 各データ取得
     fetchAssetData();
     fetchReceiptData();
   });
 
   // --- 全資産データの処理 ---
   function fetchAssetData() {
+    // パラメータなしでリクエストして全資産データを取得
     fetch(GAS_API_URL)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
       .then(data => {
+        console.log("Asset Data Loaded:", data);
         assetSheetData = data;
         renderAssetDashboard(data);
       })
       .catch(error => {
         console.error('Asset Fetch Error:', error);
+        document.getElementById('targetMonth').innerText = '(データ取得エラー)';
       });
   }
 
@@ -558,14 +560,19 @@ body {
   }
 
   function renderAssetDashboard(data) {
-    if (!data || data.length === 0) return;
-    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      console.warn("Asset data is empty or invalid format");
+      return;
+    }
+    
+    // 日付順にソート
+    const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const today = new Date();
     const currentYM = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-    const pastOrCurrentData = data.filter(d => formatAssetDate(d.date) <= currentYM);
-    const currentData = pastOrCurrentData.length > 0 ? pastOrCurrentData[pastOrCurrentData.length - 1] : data[0];
+    const pastOrCurrentData = sortedData.filter(d => formatAssetDate(d.date) <= currentYM);
+    const currentData = pastOrCurrentData.length > 0 ? pastOrCurrentData[pastOrCurrentData.length - 1] : sortedData[0];
 
     document.getElementById('targetMonth').innerText = `(${formatAssetDate(currentData.date)} 時点)`;
     document.getElementById('assetVal').innerText = formatMoney(currentData.asset);
@@ -573,7 +580,7 @@ body {
     document.getElementById('loanVal').innerText = formatMoney(currentData.loan);
 
     requestAnimationFrame(() => {
-      renderAssetChart(data);
+      renderAssetChart(sortedData);
     });
   }
 
