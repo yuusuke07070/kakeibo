@@ -85,11 +85,10 @@
     /* 状況表示カードのレイアウト（スマホ最適化） */
     .summary-grid {
       display: grid;
-      grid-template-columns: 1fr; /* スマホでは1列（縦並び）で余裕を持たせる */
+      grid-template-columns: 1fr;
       gap: 8px;
     }
     
-    /* PC・タブレットなど広い画面では横3列にする */
     @media (min-width: 480px) {
       .summary-grid {
         grid-template-columns: 1fr 1fr 1fr;
@@ -121,7 +120,7 @@
     }
     
     .summary-value { 
-      font-size: clamp(0.95rem, 4.5vw, 1.2rem); /* 画面幅に合わせて自動伸縮 */
+      font-size: clamp(0.95rem, 4.5vw, 1.2rem);
       font-weight: bold; 
       letter-spacing: 0.5px;
       word-break: break-all;
@@ -143,7 +142,7 @@
     }
     .chart-container {
       position: relative;
-      height: 300px;
+      height: 320px; /* 縦書きラベル表示用に高さを少し確保 */
       min-width: 100%;
     }
   </style>
@@ -255,8 +254,8 @@
       const wrapper = document.getElementById('scrollWrapper');
       const ctx = document.getElementById('assetChart').getContext('2d');
 
-      // 1データ点につき60pxの幅を割り当て、スクロール域を自動計算
-      const minPointWidth = 60;
+      // 縦書き化に伴い、間隔をスリムな40pxに調整
+      const minPointWidth = 40;
       const calculatedWidth = data.length * minPointWidth;
       const finalWidth = Math.max(calculatedWidth, wrapper.clientWidth);
       container.style.width = finalWidth + 'px';
@@ -271,7 +270,6 @@
 
       if (myChart) myChart.destroy();
 
-      // チャート全体のデフォルト文字色を白系に設定
       Chart.defaults.color = '#94a3b8';
       Chart.defaults.borderColor = '#334155';
 
@@ -285,8 +283,8 @@
               data: assetData,
               borderColor: '#00ff9d',       // ネオンエメラルド
               backgroundColor: '#00ff9d',
-              borderWidth: 1.5,             // 細めの線
-              pointRadius: 3,               // 細めのポイント
+              borderWidth: 1.5,
+              pointRadius: 3,
               pointHoverRadius: 6,
               spanGaps: false
             },
@@ -336,7 +334,9 @@
               grid: { color: '#1e293b' },
               ticks: { 
                 color: '#94a3b8',
-                autoSkip: false // すべての年月ラベルを表示
+                autoSkip: false,
+                minRotation: 90, // ラベルを90度回転（縦書き）
+                maxRotation: 90
               }
             },
             y: {
@@ -353,8 +353,8 @@
         }
       });
 
-      // ページ読み込み時に一番右（最新データ）まで自動スクロール
-      wrapper.scrollLeft = wrapper.scrollWidth;
+      // 初期表示位置を一番左（過去データ）に設定
+      wrapper.scrollLeft = 0;
     }
   </script>
 </body>
