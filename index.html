@@ -93,11 +93,16 @@
       letter-spacing: 0.5px;
     }
 
-    /* グラフ領域 */
+    /* 横スクロール対応のグラフ領域設定 */
+    .chart-scroll-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
     .chart-container {
       position: relative;
-      height: 300px;
-      width: 100%;
+      height: 320px;
+      min-width: 100%;
     }
   </style>
 </head>
@@ -132,11 +137,13 @@
     </div>
   </div>
 
-  <!-- 全財産グラフ -->
+  <!-- 全財産グラフ（横スクロール枠） -->
   <div class="card">
     <div class="card-title">📈 資産・ローン推移グラフ</div>
-    <div class="chart-container">
-      <canvas id="assetChart"></canvas>
+    <div class="chart-scroll-wrapper" id="scrollWrapper">
+      <div class="chart-container" id="chartArea">
+        <canvas id="assetChart"></canvas>
+      </div>
     </div>
   </div>
 
@@ -202,7 +209,15 @@
     }
 
     function renderChart(data) {
+      const container = document.getElementById('chartArea');
+      const wrapper = document.getElementById('scrollWrapper');
       const ctx = document.getElementById('assetChart').getContext('2d');
+
+      // 1データ点につき70pxの幅を割り当て、スクロール域を自動計算
+      const minPointWidth = 70;
+      const calculatedWidth = data.length * minPointWidth;
+      const finalWidth = Math.max(calculatedWidth, wrapper.clientWidth);
+      container.style.width = finalWidth + 'px';
 
       const labels = data.map(d => formatDate(d.date));
       
@@ -277,7 +292,10 @@
           scales: {
             x: {
               grid: { color: '#1e293b' },
-              ticks: { color: '#94a3b8' }
+              ticks: { 
+                color: '#94a3b8',
+                autoSkip: false // すべての年月ラベルを表示
+              }
             },
             y: {
               beginAtZero: true,
@@ -292,6 +310,9 @@
           }
         }
       });
+
+      // ページ読み込み時に一番右（最新データ）まで自動スクロール
+      wrapper.scrollLeft = wrapper.scrollWidth;
     }
   </script>
 </body>
