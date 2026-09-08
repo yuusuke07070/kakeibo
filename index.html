@@ -60,6 +60,12 @@
       font-size: 0.8rem;
       cursor: pointer;
     }
+    .current-date {
+      font-size: 0.8rem;
+      color: #64748b;
+      font-weight: normal;
+      margin-left: 6px;
+    }
     .summary-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -83,10 +89,13 @@
     <h1>全財産ダッシュボード</h1>
   </div>
 
-  <!-- 最新数値カード -->
+  <!-- 当月の最新状況カード -->
   <div class="card">
     <div class="card-title">
-      <span>💰 現在の状況</span>
+      <div>
+        <span>💰 現在の状況</span>
+        <span class="current-date" id="targetMonth">(--)</span>
+      </div>
       <button class="btn-reload" onclick="fetchSheetData()">🔄 更新</button>
     </div>
     <div class="summary-grid">
@@ -105,7 +114,7 @@
     </div>
   </div>
 
-  <!-- 全財産グラフ -->
+  <!-- 全財産グラフ（折れ線） -->
   <div class="card">
     <div class="card-title">📈 資産・ローン推移グラフ</div>
     <div class="chart-container" id="chartArea">
@@ -125,8 +134,8 @@
     };
 
     function fetchSheetData() {
-      const chartCanvas = document.getElementById('assetChart');
-      chartCanvas.style.display = 'none';
+      const canvas = document.getElementById('assetChart');
+      canvas.style.display = 'none';
       
       fetch(GAS_API_URL)
         .then(response => response.json())
@@ -139,19 +148,32 @@
         });
     }
 
+    // 日付フォーマット変換関数 (YYYY-MM-DD -> YYYY/MM)
+    function formatDateToYM(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr; // 変換失敗時はそのまま返す
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      return `${year}/${month}`;
+    }
+
     function render(data) {
       if (!data || data.length === 0) return;
 
-      // 日付順（昇順）にソート
+      // 日付順（昇順）に並び替え
       data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      // 最新データをカードに表示
-      const latest = data[data.length - 1];
-      document.getElementById('assetVal').innerText = `¥${latest.asset.toLocaleString()}`;
-      document.getElementById('expectedVal').innerText = `¥${latest.expected.toLocaleString()}`;
-      document.getElementById('loanVal').innerText = `¥${latest.loan.toLocaleString()}`;
+      // 末尾（＝最新月/当月）のデータを取得
+      const currentData = data[data.length - 1];
 
-      // グラフ描画
+      // 当月情報・カード数値を反映
+      document.getElementById('targetMonth').innerText = `(${formatDateToYM(currentData.date)} 時点)`;
+      document.getElementById('assetVal').innerText = `¥${currentData.asset.toLocaleString()}`;
+      document.getElementById('expectedVal').innerText = `¥${currentData.expected.toLocaleString()}`;
+      document.getElementById('loanVal').innerText = `¥${currentData.loan.toLocaleString()}`;
+
+      // グラフを描画
       renderChart(data);
     }
 
@@ -160,7 +182,8 @@
       canvas.style.display = 'block';
       const ctx = canvas.getContext('2d');
 
-      const labels = data.map(d => d.date);
+      // 横軸ラベルを yyyy/mm に変換
+      const labels = data.map(d => formatDateToYM(d.date));
       const assetData = data.map(d => d.asset);
       const expectedData = data.map(d => d.expected);
       const loanData = data.map(d => d.loan);
@@ -168,27 +191,36 @@
       if (myChart) myChart.destroy();
 
       myChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
           labels: labels,
           datasets: [
             {
               label: '資産',
               data: assetData,
+              borderColor: '#10b981',
               backgroundColor: '#10b981',
-              borderRadius: 4
+              borderWidth: 2,
+              pointRadius: 4,
+              tension: 0.1
             },
             {
               label: '想定資産',
               data: expectedData,
+              borderColor: '#3b82f6',
               backgroundColor: '#3b82f6',
-              borderRadius: 4
+              borderWidth: 2,
+              pointRadius: 4,
+              tension: 0.1
             },
             {
               label: '残ローン',
               data: loanData,
+              borderColor: '#ef4444',
               backgroundColor: '#ef4444',
-              borderRadius: 4
+              borderWidth: 2,
+              pointRadius: 4,
+              tension: 0.1
             }
           ]
         },
@@ -206,6 +238,9 @@
             }
           },
           scales: {
+            x: {
+              grid: { display: false }
+            },
             y: {
               beginAtZero: true,
               ticks: {
