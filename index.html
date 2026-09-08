@@ -10,7 +10,7 @@
       --bg: #0f172a;           /* 深みのあるダークバックグラウンド */
       --card-bg: #1e293b;      /* カード背景色（ダークグレー/ブラック） */
       --text-main: #f8fafc;    /* メイン文字色（ホワイト） */
-      --text-sub: #94a3b8;     /* サブ文字色（グレー） */
+      --text-sub: #94a3b8;      /* サブ文字色（グレー） */
       --border: #334155;       /* 境界線 */
       
       /* ネオンカラー定義 */
@@ -120,15 +120,16 @@
       }
     }
 
-    /* 横スクロール対応のグラフ領域設定 */
+    /* 横スクロール対応のグラフコンテナ構造 */
     .chart-scroll-wrapper {
+      position: relative;
       width: 100%;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
     .chart-container {
       position: relative;
-      height: 300px;
+      height: 540px;
       min-width: 100%;
     }
     .chart-container canvas {
@@ -235,7 +236,7 @@
       document.getElementById('expectedVal').innerText = formatMoney(currentData.expected);
       document.getElementById('loanVal').innerText = formatMoney(currentData.loan);
 
-      // モバイル等でのレイアウト確定待ちとして遅延実行
+      // レイアウト確定後に描画を実行
       requestAnimationFrame(() => {
         renderChart(data);
       });
@@ -246,11 +247,12 @@
       const wrapper = document.getElementById('scrollWrapper');
       const ctx = document.getElementById('assetChart').getContext('2d');
 
-      // 指定に合わせて点の間隔を 8px に設定
-      const minPointWidth = 8;
-      const calculatedWidth = data.length * minPointWidth;
+      // データ点数に応じた動的なグラフ幅計算（pointWidthを16から8に変更して半分の幅に調整）
+      const pointWidth = 8;
+      const calculatedWidth = (data.length * pointWidth) + 80;
       const wrapperWidth = wrapper.clientWidth || window.innerWidth;
       const finalWidth = Math.max(calculatedWidth, wrapperWidth);
+      
       container.style.width = finalWidth + 'px';
 
       const labels = data.map(d => formatDate(d.date));
@@ -274,38 +276,47 @@
             {
               label: '資産',
               data: assetData,
-              borderColor: '#00ff9d',       // ネオンエメラルド
+              borderColor: '#00ff9d',
               backgroundColor: '#00ff9d',
               borderWidth: 1.5,
-              pointRadius: 1,               // マーカーサイズを半分の大きさに
-              pointHoverRadius: 3,
+              pointRadius: 1.5,
+              pointHoverRadius: 4,
               spanGaps: false
             },
             {
               label: '想定資産',
               data: expectedData,
-              borderColor: '#00d8ff',       // ネオンシアン
+              borderColor: '#00d8ff',
               backgroundColor: '#00d8ff',
               borderWidth: 1.5,
-              pointRadius: 1,               // マーカーサイズを半分の大きさに
-              pointHoverRadius: 3,
+              pointRadius: 1.5,
+              pointHoverRadius: 4,
               spanGaps: false
             },
             {
               label: '残ローン',
               data: loanData,
-              borderColor: '#ff0055',       // ネオンピンク
+              borderColor: '#ff0055',
               backgroundColor: '#ff0055',
               borderWidth: 1.5,
-              pointRadius: 1,               // マーカーサイズを半分の大きさに
-              pointHoverRadius: 3,
+              pointRadius: 1.5,
+              pointHoverRadius: 4,
               spanGaps: false
             }
           ]
         },
         options: {
+          clip: false,
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: {
+              top: 15,
+              bottom: 0,
+              left: 20,
+              right: 20
+            }
+          },
           plugins: {
             legend: { 
               position: 'bottom',
@@ -330,7 +341,6 @@
                 autoSkip: false,
                 minRotation: 90,
                 maxRotation: 90,
-                // 3か月ごと（index % 3 === 0）のみラベルを表示
                 callback: function(val, index) {
                   return index % 3 === 0 ? this.getLabelForValue(val) : '';
                 }
@@ -338,9 +348,15 @@
             },
             y: {
               beginAtZero: true,
+              max: 40000000,
               grid: { color: '#334155' },
               ticks: {
                 color: '#94a3b8',
+                stepSize: 2000000,
+                autoSkip: false,
+                font: {
+                  size: 11
+                },
                 callback: function(value) {
                   return '¥' + (value / 10000).toLocaleString() + '万';
                 }
@@ -349,9 +365,6 @@
           }
         }
       });
-
-      // 初期表示位置を一番左に設定
-      wrapper.scrollLeft = 0;
     }
   </script>
 </body>
