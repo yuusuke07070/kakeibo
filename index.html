@@ -4,23 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#2563eb">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>家計簿アプリ</title>
+  <title>全財産ダッシュボード</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --primary: #2563eb;
+      --asset-color: #10b981;
+      --expected-color: #3b82f6;
+      --loan-color: #ef4444;
       --bg: #f8fafc;
       --card-bg: #ffffff;
       --text: #1e293b;
       --border: #e2e8f0;
     }
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
       color: var(--text);
       margin: 0;
@@ -36,10 +35,7 @@
       margin-bottom: 16px;
       box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
-    .header h1 {
-      margin: 0;
-      font-size: 1.25rem;
-    }
+    .header h1 { margin: 0; font-size: 1.25rem; }
     .card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -53,258 +49,171 @@
       margin-bottom: 12px;
       font-size: 1rem;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
     }
-    .file-input-wrapper {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
-    input[type="file"] {
-      display: none;
-    }
-    .btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 48px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: bold;
+    .btn-reload {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
       cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn:active {
-      background: #1d4ed8;
-    }
-    .btn-danger {
-      background: #ef4444;
-      margin-top: 8px;
-    }
-    .btn-danger:active {
-      background: #dc2626;
     }
     .summary-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
     }
     .summary-item {
       background: #f1f5f9;
-      padding: 12px;
+      padding: 12px 8px;
       border-radius: 8px;
       text-align: center;
     }
-    .summary-label {
-      font-size: 0.75rem;
-      color: #64748b;
-    }
-    .summary-value {
-      font-size: 1.1rem;
-      font-weight: bold;
-      margin-top: 4px;
-    }
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-      white-space: nowrap;
-    }
-    th, td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    th {
-      background: #f8fafc;
-      color: #64748b;
-    }
-    .chart-container {
-      position: relative;
-      width: 100%;
-      height: 250px;
-    }
+    .summary-label { font-size: 0.75rem; color: #64748b; font-weight: bold; }
+    .summary-value { font-size: 0.95rem; font-weight: bold; margin-top: 6px; }
+    .chart-container { position: relative; width: 100%; height: 320px; }
+    .loading { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <h1>家計簿ダッシュボード</h1>
+    <h1>全財産ダッシュボード</h1>
   </div>
 
+  <!-- 最新数値カード -->
   <div class="card">
-    <div class="card-title">📁 CSVデータ読込</div>
-    <div class="file-input-wrapper">
-      <button class="btn" onclick="document.getElementById('csvFile').click()">CSVファイルを選択</button>
-      <input type="file" id="csvFile" accept=".csv" onchange="importCSV(event)">
+    <div class="card-title">
+      <span>💰 現在の状況</span>
+      <button class="btn-reload" onclick="fetchSheetData()">🔄 更新</button>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📊 今月の収支概要</div>
     <div class="summary-grid">
       <div class="summary-item">
-        <div class="summary-label">収入</div>
-        <div class="summary-value" id="incomeVal" style="color: #10b981;">¥0</div>
+        <div class="summary-label">資産</div>
+        <div class="summary-value" id="assetVal" style="color: var(--asset-color);">¥0</div>
       </div>
       <div class="summary-item">
-        <div class="summary-label">支出</div>
-        <div class="summary-value" id="expenseVal" style="color: #ef4444;">¥0</div>
+        <div class="summary-label">想定資産</div>
+        <div class="summary-value" id="expectedVal" style="color: var(--expected-color);">¥0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">残ローン</div>
+        <div class="summary-value" id="loanVal" style="color: var(--loan-color);">¥0</div>
       </div>
     </div>
   </div>
 
+  <!-- 全財産グラフ -->
   <div class="card">
-    <div class="card-title">📈 支出内訳</div>
-    <div class="chart-container">
-      <canvas id="expenseChart"></canvas>
+    <div class="card-title">📈 資産・ローン推移グラフ</div>
+    <div class="chart-container" id="chartArea">
+      <div class="loading">データを読み込み中...</div>
+      <canvas id="assetChart" style="display: none;"></canvas>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📝 履歴一覧</div>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>項目</th>
-            <th>カテゴリ</th>
-            <th>金額</th>
-          </tr>
-        </thead>
-        <tbody id="dataTable">
-          <tr><td colspan="4" style="text-align:center; color:#94a3b8;">データがありません</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <button class="btn btn-danger" onclick="clearData()">データを消去</button>
   </div>
 
   <script>
+    // ⚠️ スプレッドシート（GAS）のウェブアプリURLを貼り付けてください
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsxsld_XVrxfKKN7uSbFbEDi6csd1hx-J8eOZf5u0C5oSIWbEud8UW5TuuPcxnM50/exec";
+
     let myChart = null;
 
     window.onload = function() {
-      loadStoredData();
+      fetchSheetData();
     };
 
-    function importCSV(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        parseAndSaveCSV(text);
-      };
-      reader.readAsText(file, 'UTF-8');
-    }
-
-    function parseAndSaveCSV(text) {
-      const lines = text.split('\n').filter(line => line.trim() !== '');
-      const data = [];
+    function fetchSheetData() {
+      const chartCanvas = document.getElementById('assetChart');
+      chartCanvas.style.display = 'none';
       
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-        if (cols.length >= 4) {
-          data.push({
-            date: cols[0],
-            item: cols[1],
-            category: cols[2],
-            amount: parseInt(cols[3], 10) || 0,
-            type: cols[4] || (parseInt(cols[3], 10) < 0 ? '支出' : '収入')
-          });
-        }
-      }
-
-      localStorage.setItem('kakeibo_data', JSON.stringify(data));
-      render(data);
-    }
-
-    function loadStoredData() {
-      const raw = localStorage.getItem('kakeibo_data');
-      if (raw) {
-        render(JSON.parse(raw));
-      }
-    }
-
-    function clearData() {
-      if (confirm('保存されているデータをすべて削除しますか？')) {
-        localStorage.removeItem('kakeibo_data');
-        location.reload();
-      }
+      fetch(GAS_API_URL)
+        .then(response => response.json())
+        .then(data => {
+          render(data);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('データの読み込みに失敗しました');
+        });
     }
 
     function render(data) {
-      let income = 0;
-      let expense = 0;
-      const categories = {};
-      const tbody = document.getElementById('dataTable');
-      tbody.innerHTML = '';
+      if (!data || data.length === 0) return;
 
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">データがありません</td></tr>';
-        return;
-      }
+      // 日付順（昇順）にソート
+      data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-      data.forEach(row => {
-        const amt = Math.abs(row.amount);
-        if (row.amount > 0 || row.type === '収入') {
-          income += amt;
-        } else {
-          expense += amt;
-          categories[row.category] = (categories[row.category] || 0) + amt;
-        }
+      // 最新データをカードに表示
+      const latest = data[data.length - 1];
+      document.getElementById('assetVal').innerText = `¥${latest.asset.toLocaleString()}`;
+      document.getElementById('expectedVal').innerText = `¥${latest.expected.toLocaleString()}`;
+      document.getElementById('loanVal').innerText = `¥${latest.loan.toLocaleString()}`;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.date}</td>
-          <td>${row.item}</td>
-          <td>${row.category}</td>
-          <td style="color: ${row.amount < 0 || row.type==='支出' ? '#ef4444' : '#10b981'}; font-weight:bold;">
-            ${row.amount < 0 || row.type==='支出' ? '-' : '+'}¥${amt.toLocaleString()}
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('incomeVal').innerText = `¥${income.toLocaleString()}`;
-      document.getElementById('expenseVal').innerText = `¥${expense.toLocaleString()}`;
-
-      renderChart(categories);
+      // グラフ描画
+      renderChart(data);
     }
 
-    function renderChart(categories) {
-      const ctx = document.getElementById('expenseChart').getContext('2d');
-      const labels = Object.keys(categories);
-      const values = Object.values(categories);
+    function renderChart(data) {
+      const canvas = document.getElementById('assetChart');
+      canvas.style.display = 'block';
+      const ctx = canvas.getContext('2d');
+
+      const labels = data.map(d => d.date);
+      const assetData = data.map(d => d.asset);
+      const expectedData = data.map(d => d.expected);
+      const loanData = data.map(d => d.loan);
 
       if (myChart) myChart.destroy();
 
       myChart = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
           labels: labels,
-          datasets: [{
-            data: values,
-            backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b']
-          }]
+          datasets: [
+            {
+              label: '資産',
+              data: assetData,
+              backgroundColor: '#10b981',
+              borderRadius: 4
+            },
+            {
+              label: '想定資産',
+              data: expectedData,
+              backgroundColor: '#3b82f6',
+              borderRadius: 4
+            },
+            {
+              label: '残ローン',
+              data: loanData,
+              backgroundColor: '#ef4444',
+              borderRadius: 4
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom' }
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: ¥${context.raw.toLocaleString()}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '¥' + (value / 10000).toLocaleString() + '万';
+                }
+              }
+            }
           }
         }
       });
