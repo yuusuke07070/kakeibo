@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>総合ダッシュボード（資産管理 ＆ 家計簿）</title>
+<title>みやっちダッシュボード</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root {
@@ -271,12 +271,61 @@ body {
   background: rgba(0,255,157,0.05);
 }
 
+/* スマホ対応：レシート明細一覧をカード型（縦積み）にするスタイル */
+.receipt-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.receipt-item-card {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.receipt-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+.receipt-item-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.receipt-item-name {
+  font-weight: bold;
+  font-size: 0.95rem;
+  word-break: break-all;
+  flex: 1;
+}
+.receipt-item-amount {
+  font-weight: bold;
+  font-size: 1rem;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.receipt-item-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #1e293b;
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
 /* 削除ボタン */
 .delete-btn {
   background: rgba(255, 0, 85, 0.15);
   color: var(--danger);
   border: 1px solid var(--danger);
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.75rem;
   cursor: pointer;
@@ -288,7 +337,7 @@ body {
   color: #fff;
 }
 
-/* グラフ関連 */
+/* グラフ関連 (縦幅を 600px に変更) */
 .chart-scroll-wrapper {
   position: relative;
   width: 100%;
@@ -297,7 +346,7 @@ body {
 }
 .chart-container {
   position: relative;
-  height: 300px;
+  height: 600px;
   min-width: 100%;
 }
 .chart-container canvas {
@@ -336,7 +385,7 @@ body {
 <body>
 
 <div class="header">
-  <h1>総合ダッシュボード</h1>
+  <h1>みやっちダッシュボード</h1>
 </div>
 
 <!-- タブ切り替えボタン -->
@@ -456,7 +505,7 @@ body {
     </div>
   </div>
 
-  <!-- 該当月明細カード -->
+  <!-- 該当月明細カード (スマホ対応の縦積みカード形式) -->
   <div class="card">
     <div class="card-title">
       <span>📋 レシート明細一覧</span>
@@ -468,21 +517,9 @@ body {
         </select>
       </div>
     </div>
-    <div style="overflow-x: auto; max-height: 380px; overflow-y: auto;">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>カテゴリ</th>
-            <th>品物</th>
-            <th>金額</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="detailTableBody">
-          <tr><td colspan="5" style="text-align: center; color: var(--text-sub);">データがありません</td></tr>
-        </tbody>
-      </table>
+    
+    <div id="detailCardListContainer" style="max-height: 420px; overflow-y: auto; padding-right: 2px;">
+      <div style="text-align: center; color: var(--text-sub); padding: 15px;">データがありません</div>
     </div>
   </div>
 </div>
@@ -528,14 +565,12 @@ body {
 
   // --- 全資産データの処理 ---
   function fetchAssetData() {
-    // パラメータなしでリクエストして全資産データを取得
     fetch(GAS_API_URL)
       .then(response => {
         if (!response.ok) throw new Error('Network response was not ok');
         return response.json();
       })
       .then(data => {
-        console.log("Asset Data Loaded:", data);
         assetSheetData = data;
         renderAssetDashboard(data);
       })
@@ -560,12 +595,8 @@ body {
   }
 
   function renderAssetDashboard(data) {
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      console.warn("Asset data is empty or invalid format");
-      return;
-    }
+    if (!data || !Array.isArray(data) || data.length === 0) return;
     
-    // 日付順にソート
     const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const today = new Date();
@@ -949,26 +980,38 @@ body {
       sortedData.sort((a, b) => a.originalIndex - b.originalIndex);
     }
 
-    const tbody = document.getElementById('detailTableBody');
-    tbody.innerHTML = '';
+    const container = document.getElementById('detailCardListContainer');
+    container.innerHTML = '';
 
     if (sortedData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">該当する明細はありません</td></tr>';
+      container.innerHTML = '<div style="text-align: center; color: var(--text-sub); padding: 15px;">該当する明細はありません</div>';
       return;
     }
 
+    const listDiv = document.createElement('div');
+    listDiv.className = 'receipt-card-list';
+
     sortedData.forEach(row => {
-      const tr = document.createElement('tr');
       const displayDate = formatDateToJP(row.date);
-      tr.innerHTML = `
-        <td style="white-space: nowrap; color: var(--text-sub);">${displayDate}</td>
-        <td><span class="badge">${escapeHtml(row.category)}</span></td>
-        <td style="font-weight: bold;">${escapeHtml(row.item)}</td>
-        <td style="font-weight: bold; text-align: right;">¥${Number(row.amount).toLocaleString()}</td>
-        <td style="text-align: center;"><button class="delete-btn" onclick="deleteReceipt(${row.rowIndex})">🗑️ 削除</button></td>
+      const itemCard = document.createElement('div');
+      itemCard.className = 'receipt-item-card';
+      itemCard.innerHTML = `
+        <div class="receipt-item-header">
+          <span>📅 ${displayDate}</span>
+          <span class="badge">${escapeHtml(row.category)}</span>
+        </div>
+        <div class="receipt-item-body">
+          <div class="receipt-item-name">${escapeHtml(row.item)}</div>
+          <div class="receipt-item-amount">¥${Number(row.amount).toLocaleString()}</div>
+        </div>
+        <div class="receipt-item-footer">
+          <button class="delete-btn" onclick="deleteReceipt(${row.rowIndex})">🗑️ 削除</button>
+        </div>
       `;
-      tbody.appendChild(tr);
+      listDiv.appendChild(itemCard);
     });
+
+    container.appendChild(listDiv);
   }
 
   function escapeHtml(str) {
