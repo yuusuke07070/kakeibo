@@ -92,7 +92,7 @@
       min-width: 100%;
     }
     .loading { text-align: center; padding: 40px; color: #64748b; font-size: 0.9rem; }
-    .error-msg { text-align: center; padding: 20px; color: #ef4444; font-size: 0.85rem; }
+    .error-msg { text-align: center; padding: 20px; color: #ef4444; font-size: 0.85rem; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -154,38 +154,32 @@
       loading.className = 'loading';
       loading.innerText = 'データを読み込み中...';
 
-      // GASのリダイレクト対応・通信設定
-      fetch(GAS_API_URL, {
-        method: 'GET',
-        redirect: 'follow'
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('ネットワークエラー');
-        return response.json();
-      })
-      .then(data => {
-        if (!data || !Array.isArray(data) || data.length === 0) {
-          throw new Error('データが見つかりませんでした');
-        }
-        loading.style.display = 'none';
-        render(data);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        loading.className = 'error-msg';
-        loading.innerText = 'データの読み込みに失敗しました。時間をおいて再読み込みしてください。';
-      });
+      fetch(GAS_API_URL, { method: 'GET' })
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTPエラー: ${response.status}`);
+          return response.json();
+        })
+        .then(data => {
+          if (!data || !Array.isArray(data) || data.length === 0) {
+            throw new Error('データが見つかりません。スプレッドシートの入力内容を確認してください。');
+          }
+          loading.style.display = 'none';
+          render(data);
+        })
+        .catch(error => {
+          console.error('Fetch Error:', error);
+          loading.className = 'error-msg';
+          loading.innerText = `読み込みエラー: ${error.message}\nGASのWEBアプリ設定をご確認ください。`;
+        });
     }
 
+    // 日付整形（YYYY/MM形式に変換）
     function formatDateToYM(dateStr) {
       if (!dateStr) return '';
-      // YYYY-MM-DD や YYYY/MM/DD の文字列解析対応
       const str = String(dateStr).trim();
-      const parts = str.match(/^(\d{4})[\-\/](\d{1,2})/);
-      if (parts) {
-        const y = parts[1];
-        const m = parts[2].padStart(2, '0');
-        return `${y}/${m}`;
+      const match = str.match(/^(\d{4})[\-\/](\d{1,2})/);
+      if (match) {
+        return `${match[1]}/${match[2].padStart(2, '0')}`;
       }
       const d = new Date(str);
       if (!isNaN(d.getTime())) {
@@ -194,53 +188,64 @@
       return str;
     }
 
+    // 数値整形（数値としてパースできない・未設定時は「設定なし」）
     function formatValue(val) {
-      if (val === null || val === undefined || val === '' || isNaN(Number(val))) return '設定なし';
-      return `¥${Number(val).toLocaleString()}`;
+      if (val === null || val === undefined || val === '') return '設定なし';
+      const cleanVal = String(val).replace(/,/g, '');
+      const num = Number(cleanVal);
+      if (isNaN(num)) return '設定なし';
+      return `¥${num.toLocaleString()}`;
     }
 
-    function render(data) {
-      // 日付のパース補助
-      const parseDate = (dStr) => {
-        if (!dStr) return 0;
-        const formatted = formatDateToYM(dStr);
-        const [y, m] = formatted.split('/');
-        return y && m ? new Date(y, m - 1, 1).getTime() : 0;
-      };
+    function render(rawData) {
+      // データのキー揺れ吸収（大文字小文字対応）
+      const normalizedData = rawData.map(item => {
+        const date = item.date || item.Date || item['日付'] || '';
+        const asset = item.asset !== undefined ? item.asset : (item.Asset || item['資産']);
+        const expected = item.expected !== undefined ? item.expected : (item.Expected || item['想定資産']);
+        const loan = item.loan !== undefined ? item.loan : (item.Loan || item['残ローン']);
+        return { date, asset, expected, loan };
+      }).filter(d => d.date);
 
-      const validData = data
-        .filter(d => d && d.date)
-        .sort((a, b) => parseDate(a.date) - parseDate(b.date));
+      if (normalizedData.length === 0) {
+        const loading = document.getElementById('loadingState');
+        loading.style.display = 'block';
+        loading.className = 'error-msg';
+        loading.innerText = '有効な日付データが存在しません。';
+        return;
+      }
 
-      if (validData.length === 0) return;
-
-      // 現在日時以前（実行月まで）で最新のものを抽出
-      const now = new Date();
-      const currentYM = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
-      const pastOrCurrentData = validData.filter(d => {
-        const ym = formatDateToYM(d.date);
-        return ym <= currentYM;
+      // 日付順ソート
+      normalizedData.sort((a, b) => {
+        const dateA = new Date(a.date.replace(/\//g, '-'));
+        const dateB = new Date(b.date.replace(/\//g, '-'));
+        return dateA - dateB;
       });
 
-      const currentData = pastOrCurrentData.length > 0 
-        ? pastOrCurrentData[pastOrCurrentData.length - 1] 
-        : validData[0];
+      // 今日以前の最新データを「現在の状況」として選定（2026/09）
+      const today = new Date();
+      const currentYM = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-      // サマリーカード表示
+      const validPastData = normalizedData.filter(d => formatDateToYM(d.date) <= currentYM);
+      const currentData = validPastData.length > 0 
+        ? validPastData[validPastData.length - 1] 
+        : normalizedData[0];
+
+      // サマリー更新
       document.getElementById('targetMonth').innerText = `(${formatDateToYM(currentData.date)} 時点)`;
       document.getElementById('assetVal').innerText = formatValue(currentData.asset);
       document.getElementById('expectedVal').innerText = formatValue(currentData.expected);
       document.getElementById('loanVal').innerText = formatValue(currentData.loan);
 
-      renderChart(validData);
+      // グラフ描画
+      renderChart(normalizedData);
     }
 
     function renderChart(data) {
       const canvas = document.getElementById('assetChart');
       const container = document.getElementById('chartArea');
       const wrapper = document.getElementById('scrollWrapper');
-      
+
       canvas.style.display = 'block';
       const ctx = canvas.getContext('2d');
 
@@ -250,7 +255,13 @@
       container.style.width = finalWidth + 'px';
 
       const labels = data.map(d => formatDateToYM(d.date));
-      const parseOrNull = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
+
+      const parseOrNull = (v) => {
+        if (v === null || v === undefined || v === '') return null;
+        const clean = String(v).replace(/,/g, '');
+        const num = Number(clean);
+        return isNaN(num) ? null : num;
+      };
 
       const assetData = data.map(d => parseOrNull(d.asset));
       const expectedData = data.map(d => parseOrNull(d.expected));
