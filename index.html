@@ -33,17 +33,6 @@ body {
   margin: 0;
   padding: 12px;
 }
-.header {
-  background: linear-gradient(135deg, #1e1b4b, #0f172a);
-  color: #fff;
-  padding: 14px 12px;
-  border-radius: 12px;
-  text-align: center;
-  margin-bottom: 12px;
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-.header h1 { margin: 0; font-size: 1.15rem; letter-spacing: 1px; }
 
 /* タブ切り替えスタイル */
 .tab-container {
@@ -56,16 +45,22 @@ body {
 }
 .tab-btn {
   flex: 1;
-  padding: 10px;
+  padding: 10px 4px;
   background: transparent;
   border: none;
   border-radius: 8px;
   color: var(--text-sub);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
   text-align: center;
+  white-space: nowrap;
+}
+@media (min-width: 400px) {
+  .tab-btn {
+    font-size: 0.85rem;
+  }
 }
 .tab-btn.active {
   background: var(--accent);
@@ -98,6 +93,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .current-date {
   font-size: 0.8rem;
@@ -178,7 +175,15 @@ body {
   border-color: var(--accent);
 }
 
-/* カテゴリラジオボタングリッド */
+/* カテゴリラジオボタングループ（スクロール対応） */
+.category-grid-wrapper {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  background: #0f172a;
+}
 .category-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -200,10 +205,10 @@ body {
 .category-label {
   display: block;
   padding: 10px 6px;
-  background: #0f172a;
+  background: #1e293b;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-align: center;
   color: var(--text-sub);
   cursor: pointer;
@@ -236,6 +241,123 @@ body {
 .submit-btn:hover { background: var(--accent-hover); }
 .submit-btn:disabled { background: var(--text-sub); cursor: not-allowed; }
 
+/* アクションボタン */
+.action-btn {
+  padding: 8px 14px;
+  background: rgba(0, 216, 255, 0.15);
+  color: var(--neon-expected);
+  border: 1px solid var(--neon-expected);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+}
+.action-btn:hover {
+  background: var(--neon-expected);
+  color: #0f172a;
+}
+
+/* フィルターボタングループ (固定費・変動費・カスタム切替) */
+.filter-pill-group {
+  display: flex;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  margin-top: 8px;
+}
+.filter-pill-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-sub);
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.filter-pill-btn.active {
+  background: var(--accent);
+  color: #0f172a;
+}
+
+/* カスタム設定パネル */
+.custom-settings-panel {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+}
+.custom-checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 10px;
+}
+@media (min-width: 480px) {
+  .custom-checkbox-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.custom-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e293b;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-main);
+  cursor: pointer;
+}
+.custom-checkbox-item input {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* 分析画面の表示切替タブ（棒グラフ vs 円グラフ） */
+.analysis-switch-container {
+  display: flex;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 4px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+.analysis-switch-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.analysis-switch-btn.active {
+  background: var(--neon-expected);
+  color: #0f172a;
+}
+
 /* テーブル共通 */
 .data-table {
   width: 100%;
@@ -244,7 +366,7 @@ body {
   font-size: 0.85rem;
 }
 .data-table th, .data-table td {
-  padding: 8px 8px;
+  padding: 8px 6px;
   border-bottom: 1px solid var(--border);
   text-align: left;
 }
@@ -253,14 +375,7 @@ body {
   font-size: 0.75rem;
   background: #0f172a;
 }
-.data-table th:last-child, .data-table td:last-child {
-  text-align: center;
-  width: 50px;
-}
-.data-table td:nth-child(4) {
-  text-align: right;
-}
-.data-table th:nth-child(4) {
+.data-table th:not(:first-child), .data-table td:not(:first-child) {
   text-align: right;
 }
 .total-row td {
@@ -271,7 +386,7 @@ body {
   background: rgba(0,255,157,0.05);
 }
 
-/* スマホ対応：レシート明細一覧をカード型（縦積み）にするスタイル */
+/* レシートカード型 */
 .receipt-card-list {
   display: flex;
   flex-direction: column;
@@ -337,7 +452,7 @@ body {
   color: #fff;
 }
 
-/* グラフ関連 (縦幅を 600px に変更) */
+/* グラフ関連 */
 .chart-scroll-wrapper {
   position: relative;
   width: 100%;
@@ -354,16 +469,73 @@ body {
   width: 100%;
   height: 100%;
 }
-.donut-container {
+.analysis-chart-container {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: 320px;
   margin-top: 15px;
 }
-.donut-container canvas {
+.analysis-chart-container canvas {
   display: block;
   width: 100%;
   height: 100%;
+}
+/* 棒グラフ専用の縦幅75%調整エリア (640px * 0.75 = 480px) */
+.analysis-bar-chart-container {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  margin-top: 15px;
+}
+.analysis-bar-chart-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 横並び円グラフ用のグリッドレイアウト */
+.pie-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 15px;
+}
+@media (min-width: 900px) {
+  .pie-charts-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.pie-column-card {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* カスタム共通凡例コンテナ */
+.custom-legend-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: center;
+  margin-top: 15px;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.custom-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-main);
+}
+.custom-legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 #loadingMsg {
@@ -384,24 +556,23 @@ body {
 </head>
 <body>
 
-<div class="header">
-  <h1>みやっちダッシュボード</h1>
-</div>
-
 <!-- タブ切り替えボタン -->
 <div class="tab-container">
   <button class="tab-btn active" onclick="switchTab('asset')">📈 全資産管理</button>
-  <button class="tab-btn" onclick="switchTab('receipt')">📝 レシート・家計簿</button>
+  <button class="tab-btn" onclick="switchTab('receipt')">📝 レシート登録</button>
+  <button class="tab-btn" onclick="switchTab('analysis')">📊 家計簿分析</button>
 </div>
 
 <!-- ================= 1. 全資産管理タブ ================= -->
 <div id="tab-asset" class="tab-content active">
-  <!-- 当月の最新状況カード -->
   <div class="card">
     <div class="card-title">
       <div>
         <span>💰 現在の状況</span>
         <span class="current-date" id="targetMonth">(--)</span>
+      </div>
+      <div>
+        <a href="https://drive.google.com" target="_blank" class="action-btn" style="background: rgba(0, 255, 157, 0.15); color: var(--accent); border-color: var(--accent);">📁 Googleドライブ</a>
       </div>
     </div>
     <div class="summary-grid">
@@ -420,7 +591,6 @@ body {
     </div>
   </div>
 
-  <!-- 全財産グラフ（横スクロール枠） -->
   <div class="card">
     <div class="card-title">📈 資産・ローン推移グラフ</div>
     <div class="chart-scroll-wrapper" id="scrollWrapper">
@@ -431,9 +601,8 @@ body {
   </div>
 </div>
 
-<!-- ================= 2. レシート・家計簿タブ ================= -->
+<!-- ================= 2. レシート登録タブ ================= -->
 <div id="tab-receipt" class="tab-content">
-  <!-- レシート入力カード -->
   <div class="card">
     <div class="card-title">📝 レシート・支出登録</div>
     <form id="receiptForm">
@@ -444,7 +613,7 @@ body {
       
       <div class="form-group">
         <label class="form-label">品物</label>
-        <input type="text" id="itemInput" class="form-input" placeholder="例: スーパーの食材、コーヒーなど" required>
+        <input type="text" id="itemInput" class="form-input" placeholder="例: スーパーの食材、電気代など" required>
       </div>
 
       <div class="form-group">
@@ -453,18 +622,9 @@ body {
       </div>
 
       <div class="form-group">
-        <label class="form-label">カテゴリ</label>
-        <div class="category-grid">
-          <div class="category-item"><input type="radio" id="cat1" name="category" value="食費-自炊"><label class="category-label" for="cat1">食費-自炊</label></div>
-          <div class="category-item"><input type="radio" id="cat2" name="category" value="食費-外食"><label class="category-label" for="cat2">食費-外食</label></div>
-          <div class="category-item"><input type="radio" id="cat3" name="category" value="趣向品-お菓子/アイス"><label class="category-label" for="cat3">趣向品-お菓子/アイス</label></div>
-          <div class="category-item"><input type="radio" id="cat4" name="category" value="生活"><label class="category-label" for="cat4">生活</label></div>
-          <div class="category-item"><input type="radio" id="cat5" name="category" value="子供"><label class="category-label" for="cat5">子供</label></div>
-          <div class="category-item"><input type="radio" id="cat6" name="category" value="衣服"><label class="category-label" for="cat6">衣服</label></div>
-          <div class="category-item"><input type="radio" id="cat7" name="category" value="美容/医療"><label class="category-label" for="cat7">美容/医療</label></div>
-          <div class="category-item"><input type="radio" id="cat8" name="category" value="ガソリン"><label class="category-label" for="cat8">ガソリン</label></div>
-          <div class="category-item"><input type="radio" id="cat9" name="category" value="お小遣い-祐介"><label class="category-label" for="cat9">お小遣い-祐介</label></div>
-          <div class="category-item"><input type="radio" id="cat10" name="category" value="お小遣い-瞳"><label class="category-label" for="cat10">お小遣い-瞳</label></div>
+        <label class="form-label">カテゴリ選択</label>
+        <div class="category-grid-wrapper">
+          <div class="category-grid" id="categorySelectionGrid"></div>
         </div>
       </div>
 
@@ -473,44 +633,19 @@ body {
     </form>
   </div>
 
-  <!-- 集計・グラフカード -->
   <div class="card">
-    <div class="card-title">
-      <span>📊 カテゴリ別集計</span>
-      <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-sub);">
-        対象月: 
-        <select id="monthFilter" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;">
-          <option value="ALL">全期間</option>
-        </select>
+    <div class="card-title" style="align-items: flex-start; gap: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
+        <span>📋 レシート明細一覧</span>
+        <div>
+          <a href="https://drive.google.com" target="_blank" class="action-btn" style="background: rgba(0, 255, 157, 0.15); color: var(--accent); border-color: var(--accent);">📁 Googleドライブ</a>
+        </div>
       </div>
-    </div>
-
-    <div style="overflow-x: auto;">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>カテゴリ</th>
-            <th>合計金額</th>
-          </tr>
-        </thead>
-        <tbody id="summaryTableBody">
-          <tr><td colspan="2" style="text-align: center; color: var(--text-sub);">データを読み込み中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ドーナツグラフエリア -->
-    <div class="donut-container">
-      <canvas id="categoryChart"></canvas>
-    </div>
-  </div>
-
-  <!-- 該当月明細カード (スマホ対応の縦積みカード形式) -->
-  <div class="card">
-    <div class="card-title">
-      <span>📋 レシート明細一覧</span>
-      <div>
-        <select id="sortOrder" class="form-select" style="padding:4px 8px; font-size:0.80rem; width:auto; display:inline-block;">
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; width: 100%; margin-top: 6px;">
+        <select id="receiptMonthFilter" class="form-select" style="padding:4px 8px; font-size:0.80rem; flex: 1; min-width: 120px;">
+          <option value="ALL">全期間の明細</option>
+        </select>
+        <select id="sortOrder" class="form-select" style="padding:4px 8px; font-size:0.80rem; flex: 1; min-width: 130px;">
           <option value="date-desc">年月・日付順 (新しい順)</option>
           <option value="date-asc">年月・日付順 (古い順)</option>
           <option value="input-order">入力順 (登録順)</option>
@@ -518,8 +653,142 @@ body {
       </div>
     </div>
     
-    <div id="detailCardListContainer" style="max-height: 420px; overflow-y: auto; padding-right: 2px;">
+    <div id="detailCardListContainer" style="max-height: 500px; overflow-y: auto; padding-right: 2px;">
       <div style="text-align: center; color: var(--text-sub); padding: 15px;">データがありません</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 3. 家計簿分析タブ ================= -->
+<div id="tab-analysis" class="tab-content">
+  <!-- 通常の分析画面 -->
+  <div id="analysisMainView">
+    <div class="card">
+      <div class="card-title" style="align-items: flex-start;">
+        <div>
+          <span>📊 カテゴリ別集計（直近3ヶ月比較）</span>
+          <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-sub); margin-top: 4px;">
+            基準月: 
+            <select id="monthFilter" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;">
+              <option value="ALL">全期間</option>
+            </select>
+          </div>
+          <!-- 固定費/変動費/カスタム 切替ボタン -->
+          <div class="filter-pill-group">
+            <button class="filter-pill-btn active" id="btnFilterAll" onclick="setExpenseTypeFilter('ALL')">すべて</button>
+            <button class="filter-pill-btn" id="btnFilterFixed" onclick="setExpenseTypeFilter('FIXED')">固定費</button>
+            <button class="filter-pill-btn" id="btnFilterVariable" onclick="setExpenseTypeFilter('VARIABLE')">変動費</button>
+            <button class="filter-pill-btn" id="btnFilterCustom" onclick="setExpenseTypeFilter('CUSTOM')">カスタム</button>
+          </div>
+        </div>
+        <div>
+          <button class="action-btn" onclick="switchSpecialView(true)">💡 特別費一覧を見る</button>
+        </div>
+      </div>
+
+      <!-- カスタム項目設定パネル（初期は非表示） -->
+      <div id="customSettingsPanel" class="custom-settings-panel" style="display: none;">
+        <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; color: var(--accent);">表示するカテゴリを選択してください:</div>
+        <div class="custom-checkbox-grid" id="customCheckboxContainer"></div>
+        <div style="display: flex; gap: 8px;">
+          <button class="submit-btn" style="margin-top: 0; padding: 8px; font-size: 0.85rem;" onclick="saveCustomCategories()">設定を保存する</button>
+          <button class="action-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--border); padding: 8px 12px; font-size: 0.85rem;" onclick="selectAllCustom(true)">全選択</button>
+          <button class="action-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--border); padding: 8px 12px; font-size: 0.85rem;" onclick="selectAllCustom(false)">全解除</button>
+        </div>
+      </div>
+
+      <!-- グラフ表示切替タブ（棒グラフ vs 円グラフ） -->
+      <div class="analysis-switch-container">
+        <button class="analysis-switch-btn active" id="btnViewBar" onclick="switchAnalysisView('bar')">📊 棒グラフ・表</button>
+        <button class="analysis-switch-btn" id="btnViewPie" onclick="switchAnalysisView('pie')">🍩 月別円グラフ</button>
+      </div>
+
+      <!-- 棒グラフ＆テーブル 表示エリア -->
+      <div id="sectionBarView">
+        <!-- 棒グラフのY軸MAX金額選択 -->
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 10px; font-size: 0.8rem; color: var(--text-sub);">
+          <label for="barMaxSelect">縦軸MAX:</label>
+          <select id="barMaxSelect" class="form-select" style="width: auto; padding: 4px 8px; font-size: 0.8rem;" onchange="changeBarMax()">
+            <option value="10000">1万</option>
+            <option value="20000">2万</option>
+            <option value="30000">3万</option>
+            <option value="50000">5万</option>
+            <option value="100000" selected>10万</option>
+            <option value="150000">15万</option>
+          </select>
+        </div>
+
+        <!-- 過去3ヶ月分の推移棒グラフ（縦幅75%調整エリア） -->
+        <div class="analysis-bar-chart-container">
+          <canvas id="barChart3Months"></canvas>
+        </div>
+
+        <div style="overflow-x: auto; margin-top: 15px;">
+          <table class="data-table">
+            <thead>
+              <tr id="tableHeaderRow">
+                <th>カテゴリ</th>
+                <th>平均</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTableBody">
+              <tr><td colspan="2" style="text-align: center; color: var(--text-sub);">データを読み込み中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 円グラフ 表示エリア (初期は非表示) -->
+      <div id="sectionPieView" style="display: none;">
+        <!-- 過去3ヶ月分を1ヶ月ごとに分けた3つの円グラフエリア（横並び） -->
+        <div style="margin-top: 10px; font-size: 0.9rem; font-weight: bold; color: var(--text-main); border-left: 4px solid var(--accent); padding-left: 8px;">
+          月別カテゴリ割合（円グラフ）
+        </div>
+        
+        <div class="pie-charts-grid">
+          <div class="pie-column-card">
+            <div style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); margin-bottom: 6px; text-align: center;" id="pieChartTitle1">3ヶ月前</div>
+            <div class="analysis-chart-container" style="height: 250px; margin-top: 0;">
+              <canvas id="categoryChartMonth1"></canvas>
+            </div>
+          </div>
+          <div class="pie-column-card">
+            <div style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); margin-bottom: 6px; text-align: center;" id="pieChartTitle2">2ヶ月前</div>
+            <div class="analysis-chart-container" style="height: 250px; margin-top: 0;">
+              <canvas id="categoryChartMonth2"></canvas>
+            </div>
+          </div>
+          <div class="pie-column-card">
+            <div style="font-size: 0.85rem; font-weight: bold; color: var(--text-sub); margin-bottom: 6px; text-align: center;" id="pieChartTitle3">当月（基準月）</div>
+            <div class="analysis-chart-container" style="height: 250px; margin-top: 0;">
+              <canvas id="categoryChartMonth3"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3つの円グラフ共通のカスタム凡例エリア -->
+        <div id="sharedCustomLegend" class="custom-legend-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 特別費専用一覧画面 -->
+  <div id="analysisSpecialView" style="display: none;">
+    <div class="card">
+      <div class="card-title" style="align-items: flex-start; gap: 8px;">
+        <div>
+          <span>💡 特別費 専用一覧</span>
+          <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-sub); margin-top: 4px;" id="specialSubTitle">直近3ヶ月分</div>
+        </div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button class="action-btn" id="specialToggleBtn" onclick="toggleSpecialMode()" style="background: rgba(0, 255, 157, 0.15); color: var(--accent); border-color: var(--accent);">🌐 全期間に切り替え</button>
+          <button class="action-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--border);" onclick="switchSpecialView(false)">◀ 分析画面に戻る</button>
+        </div>
+      </div>
+      
+      <div id="specialCardListContainer" style="max-height: 550px; overflow-y: auto; padding-right: 2px; margin-top: 10px;">
+        <div style="text-align: center; color: var(--text-sub); padding: 15px;">特別費データがありません</div>
+      </div>
     </div>
   </div>
 </div>
@@ -527,12 +796,42 @@ body {
 <script>
   const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsxsld_XVrxfKKN7uSbFbEDi6csd1hx-J8eOZf5u0C5oSIWbEud8UW5TuuPcxnM50/exec";
 
+  const ALL_CATEGORIES = [
+    "食費-自炊", "食費-外食", "趣向品-お菓子/アイス", "生活", "子供", 
+    "衣服", "美容/医療", "ガソリン", "お小遣い-祐介", "お小遣い-瞳",
+    "電気", "ガス", "水道", "ローン", "固定資産税", "車関連", "駐輪場", 
+    "学校_琉生", "学校_陸", "習い事_琉生", "習い事_陸", 
+    "保険-祐介", "保険_瞳", "保険_琉生", "保険_陸", "保険_その他", 
+    "ネット", "スマホ_祐介", "スマホ_瞳", "スマホ_琉生", "スマホ_陸",
+    "特別費"
+  ];
+
+  const FIXED_CATEGORIES = [
+    "電気", "ガス", "水道", "ローン", "固定資産税", 
+    "保険-祐介", "保険_瞳", "保険_琉生", "保険_陸", "保険_その他", 
+    "ネット", "スマホ_祐介", "スマホ_瞳", "スマホ_琉生", "スマホ_陸"
+  ];
+
+  const CATEGORY_COLORS = [
+    '#00ff9d', '#00d8ff', '#ff0055', '#ff9900', '#9900ff', 
+    '#ffff00', '#00ffff', '#ff00ff', '#76ff03', '#ff6d00',
+    '#3d5afe', '#00e676', '#ffea00', '#ff1744', '#651fff',
+    '#00b0ff', '#1de9b6', '#aeea00', '#ffd600', '#ffab40',
+    '#ff5252', '#7c4dff', '#40c4ff', '#69f0ae', '#b388ff', '#ff80ab',
+    '#ff4081', '#18ffff', '#e040fb', '#e3fd52', '#ff5722', '#795548'
+  ];
+
   let assetChartInstance = null;
-  let categoryChartInstance = null;
+  let categoryChartInstance1 = null;
+  let categoryChartInstance2 = null;
+  let categoryChartInstance3 = null;
+  let barChart3MonthsInstance = null;
   let allReceiptData = [];
   let assetSheetData = [];
+  let isSpecialAllPeriod = false; 
+  let currentExpenseFilter = 'ALL'; // 'ALL', 'FIXED', 'VARIABLE', 'CUSTOM'
+  let currentAnalysisMode = 'bar'; // 'bar', 'pie'
 
-  // タブ切り替え関数
   function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -544,8 +843,187 @@ body {
     } else if (tabName === 'receipt') {
       document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
       document.getElementById('tab-receipt').classList.add('active');
-      if (categoryChartInstance) categoryChartInstance.resize();
+    } else if (tabName === 'analysis') {
+      document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+      document.getElementById('tab-analysis').classList.add('active');
+      resizeAnalysisCharts();
     }
+  }
+
+  function resizeAnalysisCharts() {
+    if (currentAnalysisMode === 'bar') {
+      if (barChart3MonthsInstance) barChart3MonthsInstance.resize();
+    } else {
+      if (categoryChartInstance1) categoryChartInstance1.resize();
+      if (categoryChartInstance2) categoryChartInstance2.resize();
+      if (categoryChartInstance3) categoryChartInstance3.resize();
+    }
+  }
+
+  function switchAnalysisView(mode) {
+    currentAnalysisMode = mode;
+    const btnBar = document.getElementById('btnViewBar');
+    const btnPie = document.getElementById('btnViewPie');
+    const secBar = document.getElementById('sectionBarView');
+    const secPie = document.getElementById('sectionPieView');
+
+    if (mode === 'bar') {
+      btnBar.classList.add('active');
+      btnPie.classList.remove('active');
+      secBar.style.display = 'block';
+      secPie.style.display = 'none';
+      if (barChart3MonthsInstance) barChart3MonthsInstance.resize();
+    } else {
+      btnPie.classList.add('active');
+      btnBar.classList.remove('active');
+      secBar.style.display = 'none';
+      secPie.style.display = 'block';
+      if (categoryChartInstance1) categoryChartInstance1.resize();
+      if (categoryChartInstance2) categoryChartInstance2.resize();
+      if (categoryChartInstance3) categoryChartInstance3.resize();
+    }
+  }
+
+  function setExpenseTypeFilter(type) {
+    currentExpenseFilter = type;
+    document.getElementById('btnFilterAll').classList.remove('active');
+    document.getElementById('btnFilterFixed').classList.remove('active');
+    document.getElementById('btnFilterVariable').classList.remove('active');
+    document.getElementById('btnFilterCustom').classList.remove('active');
+
+    const customPanel = document.getElementById('customSettingsPanel');
+
+    if (type === 'ALL') {
+      document.getElementById('btnFilterAll').classList.add('active');
+      customPanel.style.display = 'none';
+    } else if (type === 'FIXED') {
+      document.getElementById('btnFilterFixed').classList.add('active');
+      customPanel.style.display = 'none';
+    } else if (type === 'VARIABLE') {
+      document.getElementById('btnFilterVariable').classList.add('active');
+      customPanel.style.display = 'none';
+    } else if (type === 'CUSTOM') {
+      document.getElementById('btnFilterCustom').classList.add('active');
+      customPanel.style.display = 'block';
+      buildCustomCheckboxes();
+    }
+
+    updateView();
+  }
+
+  function buildCustomCheckboxes() {
+    const container = document.getElementById('customCheckboxContainer');
+    container.innerHTML = '';
+    
+    let savedCustom = [];
+    try {
+      const stored = localStorage.getItem('miyacchi_custom_categories');
+      if (stored) savedCustom = JSON.parse(stored);
+    } catch(e) {}
+
+    // 初期保存がない場合は全カテゴリをデフォルトチェックにする
+    if (savedCustom.length === 0) {
+      savedCustom = [...ALL_CATEGORIES];
+    }
+
+    ALL_CATEGORIES.forEach((cat, index) => {
+      const isChecked = savedCustom.includes(cat);
+      const label = document.createElement('label');
+      label.className = 'custom-checkbox-item';
+      label.innerHTML = `
+        <input type="checkbox" value="${cat}" ${isChecked ? 'checked' : ''}>
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${cat}">${cat}</span>
+      `;
+      container.appendChild(label);
+    });
+  }
+
+  function selectAllCustom(status) {
+    const checkboxes = document.querySelectorAll('#customCheckboxContainer input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = status);
+  }
+
+  function saveCustomCategories() {
+    const checkboxes = document.querySelectorAll('#customCheckboxContainer input[type="checkbox"]');
+    const selected = [];
+    checkboxes.forEach(cb => {
+      if (cb.checked) selected.push(cb.value);
+    });
+
+    if (selected.length === 0) {
+      alert('最低1つのカテゴリを選択してください。');
+      return;
+    }
+
+    localStorage.setItem('miyacchi_custom_categories', JSON.stringify(selected));
+    alert('カスタムカテゴリの設定を保存しました！');
+    updateView();
+  }
+
+  function getFilteredCategories() {
+    if (currentExpenseFilter === 'FIXED') {
+      return ALL_CATEGORIES.filter(cat => FIXED_CATEGORIES.includes(cat));
+    } else if (currentExpenseFilter === 'VARIABLE') {
+      return ALL_CATEGORIES.filter(cat => !FIXED_CATEGORIES.includes(cat));
+    } else if (currentExpenseFilter === 'CUSTOM') {
+      try {
+        const stored = localStorage.getItem('miyacchi_custom_categories');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return ALL_CATEGORIES.filter(cat => parsed.includes(cat));
+          }
+        }
+      } catch(e) {}
+      return [...ALL_CATEGORIES];
+    }
+    return ALL_CATEGORIES;
+  }
+
+  function getPieChartCategories() {
+    // ユーザー設定により「特別費」と「ローン」を除外
+    let cats = getFilteredCategories();
+    return cats.filter(cat => cat !== '特別費' && cat !== 'ローン');
+  }
+
+  function changeBarMax() {
+    const maxVal = Number(document.getElementById('barMaxSelect').value);
+    if (barChart3MonthsInstance) {
+      barChart3MonthsInstance.options.scales.y.max = maxVal;
+      barChart3MonthsInstance.update();
+    }
+  }
+
+  function switchSpecialView(isSpecial) {
+    const mainView = document.getElementById('analysisMainView');
+    const specialView = document.getElementById('analysisSpecialView');
+    if (isSpecial) {
+      mainView.style.display = 'none';
+      specialView.style.display = 'block';
+      isSpecialAllPeriod = false; 
+      updateSpecialDetailTable();
+    } else {
+      specialView.style.display = 'none';
+      mainView.style.display = 'block';
+      resizeAnalysisCharts();
+    }
+  }
+
+  function toggleSpecialMode() {
+    isSpecialAllPeriod = !isSpecialAllPeriod;
+    const btn = document.getElementById('specialToggleBtn');
+    if (isSpecialAllPeriod) {
+      btn.innerText = "⏳ 直近3ヶ月に切り替え";
+      btn.style.background = "rgba(0, 216, 255, 0.15)";
+      btn.style.color = "var(--neon-expected)";
+      btn.style.borderColor = "var(--neon-expected)";
+    } else {
+      btn.innerText = "🌐 全期間に切り替え";
+      btn.style.background = "rgba(0, 255, 157, 0.15)";
+      btn.style.color = "var(--accent)";
+      btn.style.borderColor = "var(--accent)";
+    }
+    updateSpecialDetailTable();
   }
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -554,16 +1032,30 @@ body {
     const d = String(now.getDate()).padStart(2, '0');
     document.getElementById('dateInput').value = `${m}/${d}`;
 
-    document.querySelectorAll('input[name="category"]').forEach(radio => radio.checked = false);
+    buildCategoryRadioButtons();
 
     document.getElementById('monthFilter').addEventListener('change', updateView);
+    document.getElementById('receiptMonthFilter').addEventListener('change', updateDetailTable);
     document.getElementById('sortOrder').addEventListener('change', updateDetailTable);
 
     fetchAssetData();
     fetchReceiptData();
   });
 
-  // --- 全資産データの処理 ---
+  function buildCategoryRadioButtons() {
+    const grid = document.getElementById('categorySelectionGrid');
+    grid.innerHTML = '';
+    ALL_CATEGORIES.forEach((cat, index) => {
+      const div = document.createElement('div');
+      div.className = 'category-item';
+      div.innerHTML = `
+        <input type="radio" id="cat_${index}" name="category" value="${cat}">
+        <label class="category-label" for="cat_${index}" title="${cat}">${cat}</label>
+      `;
+      grid.appendChild(div);
+    });
+  }
+
   function fetchAssetData() {
     fetch(GAS_API_URL)
       .then(response => {
@@ -598,7 +1090,6 @@ body {
     if (!data || !Array.isArray(data) || data.length === 0) return;
     
     const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
-
     const today = new Date();
     const currentYM = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}`;
 
@@ -643,36 +1134,9 @@ body {
       data: {
         labels: labels,
         datasets: [
-          {
-            label: '資産',
-            data: assetData,
-            borderColor: '#00ff9d',
-            backgroundColor: '#00ff9d',
-            borderWidth: 1.5,
-            pointRadius: 1.5,
-            pointHoverRadius: 4,
-            spanGaps: false
-          },
-          {
-            label: '想定資産',
-            data: expectedData,
-            borderColor: '#00d8ff',
-            backgroundColor: '#00d8ff',
-            borderWidth: 1.5,
-            pointRadius: 1.5,
-            pointHoverRadius: 4,
-            spanGaps: false
-          },
-          {
-            label: '残ローン',
-            data: loanData,
-            borderColor: '#ff0055',
-            backgroundColor: '#ff0055',
-            borderWidth: 1.5,
-            pointRadius: 1.5,
-            pointHoverRadius: 4,
-            spanGaps: false
-          }
+          { label: '資産', data: assetData, borderColor: '#00ff9d', backgroundColor: '#00ff9d', borderWidth: 1.5, pointRadius: 1.5 },
+          { label: '想定資産', data: expectedData, borderColor: '#00d8ff', backgroundColor: '#00d8ff', borderWidth: 1.5, pointRadius: 1.5 },
+          { label: '残ローン', data: loanData, borderColor: '#ff0055', backgroundColor: '#ff0055', borderWidth: 1.5, pointRadius: 1.5 }
         ]
       },
       options: {
@@ -707,7 +1171,6 @@ body {
     wrapper.scrollLeft = 0;
   }
 
-  // --- レシート・家計簿データの処理 ---
   document.getElementById('receiptForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -870,13 +1333,16 @@ body {
       })
       .catch(err => {
         console.error('Receipt Data Fetch Error:', err);
-        document.getElementById('summaryTableBody').innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--danger);">データの取得に失敗しました</td></tr>';
+        document.getElementById('summaryTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">データの取得に失敗しました</td></tr>';
       });
   }
 
   function updateMonthFilterOptions() {
     const monthFilter = document.getElementById('monthFilter');
+    const receiptMonthFilter = document.getElementById('receiptMonthFilter');
+    
     const currentSelected = monthFilter.value;
+    const currentReceiptSelected = receiptMonthFilter.value;
 
     const monthsSet = new Set();
     allReceiptData.forEach(row => {
@@ -886,13 +1352,22 @@ body {
 
     const sortedMonths = Array.from(monthsSet).sort().reverse();
 
-    monthFilter.innerHTML = '<option value="ALL">全期間</option>';
+    monthFilter.innerHTML = '<option value="ALL">全期間 (直近3ヶ月)</option>';
     sortedMonths.forEach(ym => {
       const opt = document.createElement('option');
       opt.value = ym;
       const parts = ym.split('-');
       opt.innerText = `${parts[0]}年${parseInt(parts[1], 10)}月`;
       monthFilter.appendChild(opt);
+    });
+
+    receiptMonthFilter.innerHTML = '<option value="ALL">全期間の明細</option>';
+    sortedMonths.forEach(ym => {
+      const opt = document.createElement('option');
+      opt.value = ym;
+      const parts = ym.split('-');
+      opt.innerText = `${parts[0]}年${parseInt(parts[1], 10)}月`;
+      receiptMonthFilter.appendChild(opt);
     });
 
     const now = new Date();
@@ -905,93 +1380,218 @@ body {
     } else if (sortedMonths.length > 0) {
       monthFilter.value = sortedMonths[0];
     }
+
+    if (sortedMonths.includes(currentReceiptSelected)) {
+      receiptMonthFilter.value = currentReceiptSelected;
+    } else {
+      receiptMonthFilter.value = 'ALL';
+    }
+  }
+
+  function getPast3Months(targetYM, availableMonths) {
+    if (targetYM === 'ALL') {
+      if (availableMonths.length === 0) return [];
+      targetYM = availableMonths[0];
+    }
+
+    const parts = targetYM.split('-');
+    if (parts.length !== 2) return [targetYM];
+    let y = parseInt(parts[0], 10);
+    let m = parseInt(parts[1], 10);
+
+    const result = [];
+    for (let i = 2; i >= 0; i--) {
+      let targetM = m - i;
+      let targetY = y;
+      while (targetM <= 0) {
+        targetM += 12;
+        targetY -= 1;
+      }
+      result.push(`${targetY}-${String(targetM).padStart(2, '0')}`);
+    }
+    return result; 
+  }
+
+  function getCurrentFilteredDataAndMonths() {
+    const selectedMonth = document.getElementById('monthFilter').value;
+    const monthsSet = new Set();
+    allReceiptData.forEach(row => {
+      const ym = getYearMonth(row.date);
+      if (ym.length === 7) monthsSet.add(ym);
+    });
+    const sortedAvailableMonths = Array.from(monthsSet).sort().reverse();
+    const target3Months = getPast3Months(selectedMonth, sortedAvailableMonths);
+
+    const filteredData = allReceiptData.filter(row => {
+      const ym = getYearMonth(row.date);
+      return target3Months.includes(ym);
+    });
+
+    return { filteredData, target3Months };
   }
 
   function updateView() {
-    const selectedMonth = document.getElementById('monthFilter').value;
-    const filteredData = allReceiptData.filter(row => {
-      if (selectedMonth === 'ALL') return true;
-      return getYearMonth(row.date) === selectedMonth;
-    });
-
-    updateSummary(filteredData);
-    updateDetailTable(filteredData);
+    const { filteredData, target3Months } = getCurrentFilteredDataAndMonths();
+    updateSummaryAndAnalysis(filteredData, target3Months);
+    updateDetailTable();
+    updateSpecialDetailTable();
   }
 
-  function updateSummary(filteredData) {
-    const categories = [
-      "食費-自炊", "食費-外食", "趣向品-お菓子/アイス", "生活", "子供", 
-      "衣服", "美容/医療", "ガソリン", "お小遣い-祐介", "お小遣い-瞳"
-    ];
-    
-    const summary = {};
-    categories.forEach(cat => summary[cat] = 0);
-    let grandTotal = 0;
+  function updateSummaryAndAnalysis(filteredData, target3Months) {
+    const activeCategories = getFilteredCategories();
+    const pieCategories = getPieChartCategories();
+
+    const summaryMap = {};
+    activeCategories.forEach(cat => {
+      summaryMap[cat] = [0, 0, 0];
+    });
+
+    const monthTotals = [0, 0, 0];
 
     filteredData.forEach(row => {
       const cat = row.category;
+      if (!activeCategories.includes(cat)) return;
+
       const amt = Number(row.amount) || 0;
-      if (summary[cat] !== undefined) {
-        summary[cat] += amt;
-      } else {
-        summary[cat] = (summary[cat] || 0) + amt;
+      const ym = getYearMonth(row.date);
+      const monthIndex = target3Months.indexOf(ym);
+
+      if (monthIndex !== -1) {
+        if (!summaryMap[cat]) {
+          summaryMap[cat] = [0, 0, 0];
+        }
+        summaryMap[cat][monthIndex] += amt;
+        monthTotals[monthIndex] += amt;
       }
-      grandTotal += amt;
     });
 
+    // テーブルヘッダー
+    const headerRow = document.getElementById('tableHeaderRow');
+    headerRow.innerHTML = '<th>カテゴリ</th>';
+    target3Months.forEach(ym => {
+      const p = ym.split('-');
+      const th = document.createElement('th');
+      th.innerText = `${parseInt(p[1], 10)}月`;
+      headerRow.appendChild(th);
+    });
+    const thAverage = document.createElement('th');
+    thAverage.innerText = '平均';
+    headerRow.appendChild(thAverage);
+
+    // テーブルボディ
     const tbody = document.getElementById('summaryTableBody');
     tbody.innerHTML = '';
 
-    const chartLabels = [];
-    const chartValues = [];
+    const chartLabels = activeCategories;
+    const barDatasets = [];
+    const barColors = ['#00d8ff', '#00ff9d', '#ff9900'];
 
-    categories.forEach(cat => {
-      const amount = summary[cat];
-      chartLabels.push(cat);
-      chartValues.push(amount);
+    target3Months.forEach((ym, idx) => {
+      const p = ym.split('-');
+      const monthData = activeCategories.map(cat => summaryMap[cat][idx]);
+      barDatasets.push({
+        label: `${parseInt(p[1], 10)}月`,
+        data: monthData,
+        backgroundColor: barColors[idx % barColors.length],
+        borderRadius: 4
+      });
+    });
+
+    activeCategories.forEach(cat => {
+      const amounts = summaryMap[cat];
+      const rowSum = amounts.reduce((a, b) => a + b, 0);
+      const rowAverage = Math.round(rowSum / 3);
 
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${cat}</td><td>¥${amount.toLocaleString()}</td>`;
+      let html = `<td>${cat}</td>`;
+      amounts.forEach(amt => {
+        html += `<td>¥${amt.toLocaleString()}</td>`;
+      });
+      html += `<td>¥${rowAverage.toLocaleString()}</td>`;
+      tr.innerHTML = html;
       tbody.appendChild(tr);
     });
 
     const totalTr = document.createElement('tr');
     totalTr.className = 'total-row';
-    totalTr.innerHTML = `<td>合計</td><td>¥${grandTotal.toLocaleString()}</td>`;
+    let totalHtml = `<td>平均合計</td>`;
+    let grandTotalSum = 0;
+    monthTotals.forEach(t => {
+      totalHtml += `<td>¥${t.toLocaleString()}</td>`;
+      grandTotalSum += t;
+    });
+    const grandAverage = Math.round(grandTotalSum / 3);
+    totalHtml += `<td>¥${grandAverage.toLocaleString()}</td>`;
+    totalTr.innerHTML = totalHtml;
     tbody.appendChild(totalTr);
 
-    renderCategoryChart(chartLabels, chartValues);
+    render3MonthsBarChart(chartLabels, barDatasets);
+
+    if (target3Months.length >= 3) {
+      document.getElementById('pieChartTitle1').innerText = `${parseInt(target3Months[0].split('-')[1], 10)}月 の内訳`;
+      document.getElementById('pieChartTitle2').innerText = `${parseInt(target3Months[1].split('-')[1], 10)}月 の内訳`;
+      document.getElementById('pieChartTitle3').innerText = `${parseInt(target3Months[2].split('-')[1], 10)}月 の内訳（当月）`;
+    }
+
+    const valuesMonth1 = pieCategories.map(cat => summaryMap[cat][0] || 0);
+    const valuesMonth2 = pieCategories.map(cat => summaryMap[cat][1] || 0);
+    const valuesMonth3 = pieCategories.map(cat => summaryMap[cat][2] || 0);
+
+    renderCategoryChart('categoryChartMonth1', pieCategories, valuesMonth1, (inst) => { categoryChartInstance1 = inst; });
+    renderCategoryChart('categoryChartMonth2', pieCategories, valuesMonth2, (inst) => { categoryChartInstance2 = inst; });
+    renderCategoryChart('categoryChartMonth3', pieCategories, valuesMonth3, (inst) => { categoryChartInstance3 = inst; });
+
+    // 共通カスタム凡例の描画（特別費・ローンを除外した円グラフ用の凡例）
+    renderSharedCustomLegend(pieCategories);
   }
 
-  function updateDetailTable(paramData) {
-    const selectedMonth = document.getElementById('monthFilter').value;
-    const filteredData = Array.isArray(paramData) ? paramData : allReceiptData.filter(row => {
-      if (selectedMonth === 'ALL') return true;
-      return getYearMonth(row.date) === selectedMonth;
+  function renderSharedCustomLegend(labels) {
+    const container = document.getElementById('sharedCustomLegend');
+    container.innerHTML = '';
+
+    labels.forEach((cat, index) => {
+      const colorIndex = ALL_CATEGORIES.indexOf(cat);
+      const color = CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
+
+      const item = document.createElement('div');
+      item.className = 'custom-legend-item';
+      item.innerHTML = `
+        <div class="custom-legend-color" style="background-color: ${color};"></div>
+        <span>${cat}</span>
+      `;
+      container.appendChild(item);
     });
+  }
+
+  function updateDetailTable() {
+    const selectedMonth = document.getElementById('receiptMonthFilter').value;
+    let targetData = [...allReceiptData];
+
+    if (selectedMonth !== 'ALL') {
+      targetData = targetData.filter(row => getYearMonth(row.date) === selectedMonth);
+    }
 
     const sortOrder = document.getElementById('sortOrder').value;
-    const sortedData = [...filteredData];
     if (sortOrder === 'date-desc') {
-      sortedData.sort((a, b) => b.dateObj - a.dateObj || b.originalIndex - b.originalIndex);
+      targetData.sort((a, b) => b.dateObj - a.dateObj || b.originalIndex - a.originalIndex);
     } else if (sortOrder === 'date-asc') {
-      sortedData.sort((a, b) => a.dateObj - b.dateObj || a.originalIndex - b.originalIndex);
+      targetData.sort((a, b) => a.dateObj - b.dateObj || a.originalIndex - b.originalIndex);
     } else if (sortOrder === 'input-order') {
-      sortedData.sort((a, b) => a.originalIndex - b.originalIndex);
+      targetData.sort((a, b) => a.originalIndex - b.originalIndex);
     }
 
     const container = document.getElementById('detailCardListContainer');
     container.innerHTML = '';
 
-    if (sortedData.length === 0) {
-      container.innerHTML = '<div style="text-align: center; color: var(--text-sub); padding: 15px;">該当する明細はありません</div>';
+    if (targetData.length === 0) {
+      container.innerHTML = '<div style="text-align: center; color: var(--text-sub); padding: 15px;">該当する明細データがありません</div>';
       return;
     }
 
     const listDiv = document.createElement('div');
     listDiv.className = 'receipt-card-list';
 
-    sortedData.forEach(row => {
+    targetData.forEach(row => {
       const displayDate = formatDateToJP(row.date);
       const itemCard = document.createElement('div');
       itemCard.className = 'receipt-item-card';
@@ -1014,6 +1614,51 @@ body {
     container.appendChild(listDiv);
   }
 
+  function updateSpecialDetailTable() {
+    let specialData = [];
+    const subTitleEl = document.getElementById('specialSubTitle');
+
+    if (isSpecialAllPeriod) {
+      specialData = allReceiptData.filter(row => row.category === '特別費');
+      subTitleEl.innerText = "全期間分の特別費";
+    } else {
+      const { filteredData } = getCurrentFilteredDataAndMonths();
+      specialData = filteredData.filter(row => row.category === '特別費');
+      subTitleEl.innerText = "直近3ヶ月分の特別費";
+    }
+
+    specialData.sort((a, b) => b.dateObj - a.dateObj || b.originalIndex - a.originalIndex);
+
+    const container = document.getElementById('specialCardListContainer');
+    container.innerHTML = '';
+
+    if (specialData.length === 0) {
+      container.innerHTML = '<div style="text-align: center; color: var(--text-sub); padding: 15px;">特別費データがありません</div>';
+      return;
+    }
+
+    const listDiv = document.createElement('div');
+    listDiv.className = 'receipt-card-list';
+
+    specialData.forEach(row => {
+      const displayDate = formatDateToJP(row.date);
+      const itemCard = document.createElement('div');
+      itemCard.className = 'receipt-item-card';
+      itemCard.innerHTML = `
+        <div class="receipt-item-header">
+          <span>📅 ${displayDate}</span>
+        </div>
+        <div class="receipt-item-body" style="padding-top: 2px;">
+          <div class="receipt-item-name">${escapeHtml(row.item)}</div>
+          <div class="receipt-item-amount">¥${Number(row.amount).toLocaleString()}</div>
+        </div>
+      `;
+      listDiv.appendChild(itemCard);
+    });
+
+    container.appendChild(listDiv);
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>"]/g, function(match) {
@@ -1022,22 +1667,71 @@ body {
     });
   }
 
-  function renderCategoryChart(labels, values) {
-    const ctx = document.getElementById('categoryChart').getContext('2d');
-    if (categoryChartInstance) categoryChartInstance.destroy();
+  function render3MonthsBarChart(labels, datasets) {
+    const ctx = document.getElementById('barChart3Months').getContext('2d');
+    if (barChart3MonthsInstance) barChart3MonthsInstance.destroy();
 
-    const colors = [
-      '#00ff9d', '#00d8ff', '#ff0055', '#ff9900', '#9900ff', 
-      '#ffff00', '#00ffff', '#ff00ff', '#76ff03', '#ff6d00'
-    ];
+    const currentMax = Number(document.getElementById('barMaxSelect').value);
 
-    categoryChartInstance = new Chart(ctx, {
+    barChart3MonthsInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#f8fafc', boxWidth: 12, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return ` ${context.dataset.label} - ${context.label}: ¥${context.raw.toLocaleString()}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: '#1e293b' },
+            ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+          },
+          y: {
+            beginAtZero: true,
+            max: currentMax,
+            grid: { color: '#334155' },
+            ticks: {
+              color: '#94a3b8',
+              callback: function(value) { return '¥' + (value >= 10000 ? (value / 10000).toLocaleString() + '万' : value); }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderCategoryChart(canvasId, labels, values, setInstanceCallback) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    if (canvasId === 'categoryChartMonth1' && categoryChartInstance1) categoryChartInstance1.destroy();
+    if (canvasId === 'categoryChartMonth2' && categoryChartInstance2) categoryChartInstance2.destroy();
+    if (canvasId === 'categoryChartMonth3' && categoryChartInstance3) categoryChartInstance3.destroy();
+
+    const showLegend = false;
+
+    const backgroundColors = labels.map(cat => {
+      const colorIndex = ALL_CATEGORIES.indexOf(cat);
+      return CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
+    });
+
+    const newInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: labels,
         datasets: [{
           data: values,
-          backgroundColor: colors,
+          backgroundColor: backgroundColors,
           borderColor: '#1e293b',
           borderWidth: 2
         }]
@@ -1047,8 +1741,7 @@ body {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: { color: '#f8fafc', boxWidth: 12, font: { size: 11 } }
+            display: showLegend
           },
           tooltip: {
             callbacks: {
@@ -1060,6 +1753,8 @@ body {
         }
       }
     });
+
+    setInstanceCallback(newInstance);
   }
 </script>
 </body>
