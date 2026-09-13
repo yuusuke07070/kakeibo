@@ -42,15 +42,16 @@ body {
   padding: 4px;
   margin-bottom: 12px;
   border: 1px solid var(--border);
+  gap: 2px;
 }
 .tab-btn {
   flex: 1;
-  padding: 10px 4px;
+  padding: 10px 2px;
   background: transparent;
   border: none;
   border-radius: 8px;
   color: var(--text-sub);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
@@ -59,7 +60,7 @@ body {
 }
 @media (min-width: 400px) {
   .tab-btn {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 }
 .tab-btn.active {
@@ -369,11 +370,15 @@ body {
   padding: 8px 6px;
   border-bottom: 1px solid var(--border);
   text-align: left;
+  white-space: nowrap;
 }
 .data-table th {
   color: var(--text-sub);
   font-size: 0.75rem;
   background: #0f172a;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 .data-table th:not(:first-child), .data-table td:not(:first-child) {
   text-align: right;
@@ -384,6 +389,26 @@ body {
   border-top: 2px solid var(--accent);
   border-bottom: none;
   background: rgba(0,255,157,0.05);
+}
+
+/* 差分表示用のスタイリング */
+.diff-plus {
+  color: #38bdf8; /* 青系 */
+  font-size: 0.75rem;
+  margin-left: 4px;
+  font-weight: normal;
+}
+.diff-minus {
+  color: var(--danger); /* 赤系 */
+  font-size: 0.75rem;
+  margin-left: 4px;
+  font-weight: normal;
+}
+.diff-zero {
+  color: var(--text-sub);
+  font-size: 0.75rem;
+  margin-left: 4px;
+  font-weight: normal;
 }
 
 /* レシートカード型 */
@@ -480,7 +505,6 @@ body {
   width: 100%;
   height: 100%;
 }
-/* 棒グラフ専用の縦幅75%調整エリア (640px * 0.75 = 480px) */
 .analysis-bar-chart-container {
   position: relative;
   width: 100%;
@@ -558,9 +582,10 @@ body {
 
 <!-- タブ切り替えボタン -->
 <div class="tab-container">
-  <button class="tab-btn active" onclick="switchTab('asset')">📈 全資産管理</button>
-  <button class="tab-btn" onclick="switchTab('receipt')">📝 レシート登録</button>
-  <button class="tab-btn" onclick="switchTab('analysis')">📊 家計簿分析</button>
+  <button class="tab-btn active" onclick="switchTab('asset')">📈 全資産</button>
+  <button class="tab-btn" onclick="switchTab('receipt')">📝 レシート</button>
+  <button class="tab-btn" onclick="switchTab('analysis')">📊 分析</button>
+  <button class="tab-btn" onclick="switchTab('matrix')">📉 表形式</button>
 </div>
 
 <!-- ================= 1. 全資産管理タブ ================= -->
@@ -666,12 +691,22 @@ body {
     <div class="card">
       <div class="card-title" style="align-items: flex-start;">
         <div>
-          <span>📊 カテゴリ別集計（直近3ヶ月比較）</span>
-          <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-sub); margin-top: 4px;">
-            基準月: 
-            <select id="monthFilter" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;">
-              <option value="ALL">全期間</option>
-            </select>
+          <span id="analysisMainTitle">📊 カテゴリ別集計（直近3ヶ月比較）</span>
+          <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-sub); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            <span>基準月: 
+              <select id="monthFilter" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;">
+                <option value="ALL">全期間</option>
+              </select>
+            </span>
+            <span>期間: 
+              <select id="analysisPeriodSelect" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;" onchange="updateView()">
+                <option value="3">3ヶ月</option>
+                <option value="6">6ヶ月</option>
+                <option value="12">1年</option>
+                <option value="24">2年</option>
+                <option value="36">3年</option>
+              </select>
+            </span>
           </div>
           <!-- 固定費/変動費/カスタム 切替ボタン -->
           <div class="filter-pill-group">
@@ -688,24 +723,40 @@ body {
 
       <!-- カスタム項目設定パネル（初期は非表示） -->
       <div id="customSettingsPanel" class="custom-settings-panel" style="display: none;">
+        <!-- 保存済み設定の切替・管理エリア -->
+        <div style="background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+          <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; color: var(--neon-expected);">保存済み設定の選択:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+            <select id="savedCustomProfileSelect" class="form-select" style="flex: 1; min-width: 150px; padding: 6px 8px; font-size: 0.85rem;" onchange="loadCustomProfile(this.value)">
+              <option value="">-- 設定を選択してください --</option>
+            </select>
+            <button class="delete-btn" style="padding: 6px 10px;" onclick="deleteCurrentCustomProfile()">この設定を削除</button>
+          </div>
+        </div>
+
         <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; color: var(--accent);">表示するカテゴリを選択してください:</div>
         <div class="custom-checkbox-grid" id="customCheckboxContainer"></div>
-        <div style="display: flex; gap: 8px;">
-          <button class="submit-btn" style="margin-top: 0; padding: 8px; font-size: 0.85rem;" onclick="saveCustomCategories()">設定を保存する</button>
-          <button class="action-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--border); padding: 8px 12px; font-size: 0.85rem;" onclick="selectAllCustom(true)">全選択</button>
-          <button class="action-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--border); padding: 8px 12px; font-size: 0.85rem;" onclick="selectAllCustom(false)">全解除</button>
+        
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
+          <button class="action-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--border); padding: 6px 10px; font-size: 0.8rem;" onclick="selectAllCustom(true)">全選択</button>
+          <button class="action-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--border); padding: 6px 10px; font-size: 0.8rem;" onclick="selectAllCustom(false)">全解除</button>
+        </div>
+
+        <!-- 名前をつけて保存エリア -->
+        <div style="border-top: 1px solid var(--border); padding-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="customProfileNameInput" class="form-input" placeholder="設定名を入力 (例: 食費・生活費のみ)" style="flex: 1; min-width: 160px; padding: 8px; font-size: 0.85rem;">
+          <button class="submit-btn" style="margin-top: 0; padding: 8px 12px; font-size: 0.85rem; width: auto;" onclick="saveCustomProfile()">名前をつけて保存</button>
         </div>
       </div>
 
       <!-- グラフ表示切替タブ（棒グラフ vs 円グラフ） -->
       <div class="analysis-switch-container">
         <button class="analysis-switch-btn active" id="btnViewBar" onclick="switchAnalysisView('bar')">📊 棒グラフ・表</button>
-        <button class="analysis-switch-btn" id="btnViewPie" onclick="switchAnalysisView('pie')">🍩 月別円グラフ</button>
+        <button class="analysis-switch-btn" id="btnViewPie" onclick="switchAnalysisView('pie')">🍩 月別円グラフ (直近3ヶ月)</button>
       </div>
 
       <!-- 棒グラフ＆テーブル 表示エリア -->
       <div id="sectionBarView">
-        <!-- 棒グラフのY軸MAX金額選択 -->
         <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 10px; font-size: 0.8rem; color: var(--text-sub);">
           <label for="barMaxSelect">縦軸MAX:</label>
           <select id="barMaxSelect" class="form-select" style="width: auto; padding: 4px 8px; font-size: 0.8rem;" onchange="changeBarMax()">
@@ -715,12 +766,13 @@ body {
             <option value="50000">5万</option>
             <option value="100000" selected>10万</option>
             <option value="150000">15万</option>
+            <option value="200000">20万</option>
+            <option value="300000">30万</option>
           </select>
         </div>
 
-        <!-- 過去3ヶ月分の推移棒グラフ（縦幅75%調整エリア） -->
         <div class="analysis-bar-chart-container">
-          <canvas id="barChart3Months"></canvas>
+          <canvas id="barChartMonths"></canvas>
         </div>
 
         <div style="overflow-x: auto; margin-top: 15px;">
@@ -738,11 +790,10 @@ body {
         </div>
       </div>
 
-      <!-- 円グラフ 表示エリア (初期は非表示) -->
+      <!-- 円グラフ 表示エリア -->
       <div id="sectionPieView" style="display: none;">
-        <!-- 過去3ヶ月分を1ヶ月ごとに分けた3つの円グラフエリア（横並び） -->
         <div style="margin-top: 10px; font-size: 0.9rem; font-weight: bold; color: var(--text-main); border-left: 4px solid var(--accent); padding-left: 8px;">
-          月別カテゴリ割合（円グラフ）
+          月別カテゴリ割合（円グラフ・直近3ヶ月固定）
         </div>
         
         <div class="pie-charts-grid">
@@ -766,7 +817,6 @@ body {
           </div>
         </div>
 
-        <!-- 3つの円グラフ共通のカスタム凡例エリア -->
         <div id="sharedCustomLegend" class="custom-legend-container"></div>
       </div>
     </div>
@@ -789,6 +839,54 @@ body {
       <div id="specialCardListContainer" style="max-height: 550px; overflow-y: auto; padding-right: 2px; margin-top: 10px;">
         <div style="text-align: center; color: var(--text-sub); padding: 15px;">特別費データがありません</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 4. マトリックス表タブ ================= -->
+<div id="tab-matrix" class="tab-content">
+  <div class="card">
+    <div class="card-title" style="align-items: flex-start;">
+      <div>
+        <span>📉 月別カテゴリ マトリックス集計</span>
+        <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-sub); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+          <span>基準月: 
+            <select id="matrixMonthFilter" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;" onchange="updateMatrixTable()">
+              <option value="ALL">全期間</option>
+            </select>
+          </span>
+          <span>期間: 
+            <select id="matrixPeriodSelect" class="form-select" style="display:inline-block; width:auto; padding:4px 8px; font-size:0.85rem; margin-left:4px;" onchange="updateMatrixTable()">
+              <option value="ALL">全期間</option>
+              <option value="3">3ヶ月</option>
+              <option value="6">6ヶ月</option>
+              <option value="12">1年</option>
+              <option value="24">2年</option>
+              <option value="36">3年</option>
+            </select>
+          </span>
+        </div>
+        <!-- 固定費/変動費/カスタム 切替ボタン -->
+        <div class="filter-pill-group">
+          <button class="filter-pill-btn active" id="matrixBtnFilterAll" onclick="setMatrixExpenseTypeFilter('ALL')">すべて</button>
+          <button class="filter-pill-btn" id="matrixBtnFilterFixed" onclick="setMatrixExpenseTypeFilter('FIXED')">固定費</button>
+          <button class="filter-pill-btn" id="matrixBtnFilterVariable" onclick="setMatrixExpenseTypeFilter('VARIABLE')">変動費</button>
+          <button class="filter-pill-btn" id="matrixBtnFilterCustom" onclick="setMatrixExpenseTypeFilter('CUSTOM')">カスタム</button>
+        </div>
+      </div>
+    </div>
+    
+    <div style="overflow-x: auto; margin-top: 10px; max-height: 550px;">
+      <table class="data-table" id="matrixTable">
+        <thead>
+          <tr id="matrixHeaderRow">
+            <th>カテゴリ</th>
+          </tr>
+        </thead>
+        <tbody id="matrixTableBody">
+          <tr><td style="text-align: center; color: var(--text-sub); padding: 15px;">データを読み込み中...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -825,12 +923,14 @@ body {
   let categoryChartInstance1 = null;
   let categoryChartInstance2 = null;
   let categoryChartInstance3 = null;
-  let barChart3MonthsInstance = null;
+  let barChartMonthsInstance = null;
   let allReceiptData = [];
   let assetSheetData = [];
   let isSpecialAllPeriod = false; 
-  let currentExpenseFilter = 'ALL'; // 'ALL', 'FIXED', 'VARIABLE', 'CUSTOM'
-  let currentAnalysisMode = 'bar'; // 'bar', 'pie'
+  let currentExpenseFilter = 'ALL'; 
+  let matrixExpenseFilter = 'ALL';
+  let currentAnalysisMode = 'bar'; 
+  let currentActiveProfileName = ''; 
 
   function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -846,13 +946,18 @@ body {
     } else if (tabName === 'analysis') {
       document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
       document.getElementById('tab-analysis').classList.add('active');
+      switchSpecialView(false);
       resizeAnalysisCharts();
+    } else if (tabName === 'matrix') {
+      document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
+      document.getElementById('tab-matrix').classList.add('active');
+      updateMatrixTable();
     }
   }
 
   function resizeAnalysisCharts() {
     if (currentAnalysisMode === 'bar') {
-      if (barChart3MonthsInstance) barChart3MonthsInstance.resize();
+      if (barChartMonthsInstance) barChartMonthsInstance.resize();
     } else {
       if (categoryChartInstance1) categoryChartInstance1.resize();
       if (categoryChartInstance2) categoryChartInstance2.resize();
@@ -872,7 +977,7 @@ body {
       btnPie.classList.remove('active');
       secBar.style.display = 'block';
       secPie.style.display = 'none';
-      if (barChart3MonthsInstance) barChart3MonthsInstance.resize();
+      if (barChartMonthsInstance) barChartMonthsInstance.resize();
     } else {
       btnPie.classList.add('active');
       btnBar.classList.remove('active');
@@ -905,29 +1010,100 @@ body {
     } else if (type === 'CUSTOM') {
       document.getElementById('btnFilterCustom').classList.add('active');
       customPanel.style.display = 'block';
-      buildCustomCheckboxes();
+      initCustomPanel();
     }
 
     updateView();
   }
 
-  function buildCustomCheckboxes() {
+  function setMatrixExpenseTypeFilter(type) {
+    matrixExpenseFilter = type;
+    document.getElementById('matrixBtnFilterAll').classList.remove('active');
+    document.getElementById('matrixBtnFilterFixed').classList.remove('active');
+    document.getElementById('matrixBtnFilterVariable').classList.remove('active');
+    document.getElementById('matrixBtnFilterCustom').classList.remove('active');
+
+    if (type === 'ALL') {
+      document.getElementById('matrixBtnFilterAll').classList.add('active');
+    } else if (type === 'FIXED') {
+      document.getElementById('matrixBtnFilterFixed').classList.add('active');
+    } else if (type === 'VARIABLE') {
+      document.getElementById('matrixBtnFilterVariable').classList.add('active');
+    } else if (type === 'CUSTOM') {
+      document.getElementById('matrixBtnFilterCustom').classList.add('active');
+      if (currentExpenseFilter !== 'CUSTOM') {
+        currentExpenseFilter = 'CUSTOM';
+        document.getElementById('btnFilterAll').classList.remove('active');
+        document.getElementById('btnFilterFixed').classList.remove('active');
+        document.getElementById('btnFilterVariable').classList.remove('active');
+        document.getElementById('btnFilterCustom').classList.add('active');
+        document.getElementById('customSettingsPanel').style.display = 'block';
+        initCustomPanel();
+      }
+    }
+
+    updateMatrixTable();
+  }
+
+  function getCustomProfilesMap() {
+    try {
+      const stored = localStorage.getItem('miyacchi_custom_profiles_map');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (typeof parsed === 'object' && parsed !== null) return parsed;
+      }
+    } catch(e) {}
+    
+    try {
+      const oldStored = localStorage.getItem('miyacchi_custom_categories');
+      if (oldStored) {
+        const parsedOld = JSON.parse(oldStored);
+        if (Array.isArray(parsedOld) && parsedOld.length > 0) {
+          const initialMap = { "デフォルト設定": parsedOld };
+          localStorage.setItem('miyacchi_custom_profiles_map', JSON.stringify(initialMap));
+          return initialMap;
+        }
+      }
+    } catch(e) {}
+
+    return {};
+  }
+
+  function initCustomPanel() {
+    const profilesMap = getCustomProfilesMap();
+    const selectEl = document.getElementById('savedCustomProfileSelect');
+    selectEl.innerHTML = '<option value="">-- 設定を選択してください --</option>';
+
+    const profileNames = Object.keys(profilesMap);
+    profileNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.innerText = name;
+      if (name === currentActiveProfileName) {
+        opt.selected = true;
+      }
+      selectEl.appendChild(opt);
+    });
+
+    if (!currentActiveProfileName && profileNames.length > 0) {
+      currentActiveProfileName = profileNames[0];
+      selectEl.value = currentActiveProfileName;
+    }
+
+    let targetCategories = ALL_CATEGORIES;
+    if (currentActiveProfileName && profilesMap[currentActiveProfileName]) {
+      targetCategories = profilesMap[currentActiveProfileName];
+    }
+
+    buildCustomCheckboxes(targetCategories);
+  }
+
+  function buildCustomCheckboxes(checkedList) {
     const container = document.getElementById('customCheckboxContainer');
     container.innerHTML = '';
     
-    let savedCustom = [];
-    try {
-      const stored = localStorage.getItem('miyacchi_custom_categories');
-      if (stored) savedCustom = JSON.parse(stored);
-    } catch(e) {}
-
-    // 初期保存がない場合は全カテゴリをデフォルトチェックにする
-    if (savedCustom.length === 0) {
-      savedCustom = [...ALL_CATEGORIES];
-    }
-
-    ALL_CATEGORIES.forEach((cat, index) => {
-      const isChecked = savedCustom.includes(cat);
+    ALL_CATEGORIES.forEach((cat) => {
+      const isChecked = checkedList.includes(cat);
       const label = document.createElement('label');
       label.className = 'custom-checkbox-item';
       label.innerHTML = `
@@ -938,12 +1114,33 @@ body {
     });
   }
 
+  function loadCustomProfile(profileName) {
+    if (!profileName) return;
+    const profilesMap = getCustomProfilesMap();
+    if (profilesMap[profileName]) {
+      currentActiveProfileName = profileName;
+      document.getElementById('customProfileNameInput').value = profileName;
+      buildCustomCheckboxes(profilesMap[profileName]);
+      updateView();
+      updateMatrixTable();
+    }
+  }
+
   function selectAllCustom(status) {
     const checkboxes = document.querySelectorAll('#customCheckboxContainer input[type="checkbox"]');
     checkboxes.forEach(cb => cb.checked = status);
   }
 
-  function saveCustomCategories() {
+  function saveCustomProfile() {
+    const profileNameInput = document.getElementById('customProfileNameInput');
+    const profileName = profileNameInput.value.trim();
+
+    if (!profileName) {
+      alert('保存する設定名を入力してください。');
+      profileNameInput.focus();
+      return;
+    }
+
     const checkboxes = document.querySelectorAll('#customCheckboxContainer input[type="checkbox"]');
     const selected = [];
     checkboxes.forEach(cb => {
@@ -955,17 +1152,57 @@ body {
       return;
     }
 
+    const profilesMap = getCustomProfilesMap();
+    profilesMap[profileName] = selected;
+
+    localStorage.setItem('miyacchi_custom_profiles_map', JSON.stringify(profilesMap));
     localStorage.setItem('miyacchi_custom_categories', JSON.stringify(selected));
-    alert('カスタムカテゴリの設定を保存しました！');
+
+    currentActiveProfileName = profileName;
+    initCustomPanel();
+    alert(`カスタム設定「${profileName}」を保存しました！`);
     updateView();
+    updateMatrixTable();
   }
 
-  function getFilteredCategories() {
-    if (currentExpenseFilter === 'FIXED') {
+  function deleteCurrentCustomProfile() {
+    if (!currentActiveProfileName) {
+      alert('削除する設定が選択されていません。');
+      return;
+    }
+
+    if (!confirm(`設定「${currentActiveProfileName}」を削除してもよろしいですか？`)) return;
+
+    const profilesMap = getCustomProfilesMap();
+    delete profilesMap[currentActiveProfileName];
+
+    localStorage.setItem('miyacchi_custom_profiles_map', JSON.stringify(profilesMap));
+
+    const remainingNames = Object.keys(profilesMap);
+    if (remainingNames.length > 0) {
+      currentActiveProfileName = remainingNames[0];
+    } else {
+      currentActiveProfileName = '';
+    }
+
+    document.getElementById('customProfileNameInput').value = currentActiveProfileName;
+    initCustomPanel();
+    alert('設定を削除しました。');
+    updateView();
+    updateMatrixTable();
+  }
+
+  function getFilteredCategories(filterType) {
+    const targetFilter = filterType || currentExpenseFilter;
+    if (targetFilter === 'FIXED') {
       return ALL_CATEGORIES.filter(cat => FIXED_CATEGORIES.includes(cat));
-    } else if (currentExpenseFilter === 'VARIABLE') {
+    } else if (targetFilter === 'VARIABLE') {
       return ALL_CATEGORIES.filter(cat => !FIXED_CATEGORIES.includes(cat));
-    } else if (currentExpenseFilter === 'CUSTOM') {
+    } else if (targetFilter === 'CUSTOM') {
+      const profilesMap = getCustomProfilesMap();
+      if (currentActiveProfileName && profilesMap[currentActiveProfileName]) {
+        return ALL_CATEGORIES.filter(cat => profilesMap[currentActiveProfileName].includes(cat));
+      }
       try {
         const stored = localStorage.getItem('miyacchi_custom_categories');
         if (stored) {
@@ -981,16 +1218,15 @@ body {
   }
 
   function getPieChartCategories() {
-    // ユーザー設定により「特別費」と「ローン」を除外
     let cats = getFilteredCategories();
     return cats.filter(cat => cat !== '特別費' && cat !== 'ローン');
   }
 
   function changeBarMax() {
     const maxVal = Number(document.getElementById('barMaxSelect').value);
-    if (barChart3MonthsInstance) {
-      barChart3MonthsInstance.options.scales.y.max = maxVal;
-      barChart3MonthsInstance.update();
+    if (barChartMonthsInstance) {
+      barChartMonthsInstance.options.scales.y.max = maxVal;
+      barChartMonthsInstance.update();
     }
   }
 
@@ -1013,7 +1249,7 @@ body {
     isSpecialAllPeriod = !isSpecialAllPeriod;
     const btn = document.getElementById('specialToggleBtn');
     if (isSpecialAllPeriod) {
-      btn.innerText = "⏳ 直近3ヶ月に切り替え";
+      btn.innerText = "⏳ 選択期間に切り替え";
       btn.style.background = "rgba(0, 216, 255, 0.15)";
       btn.style.color = "var(--neon-expected)";
       btn.style.borderColor = "var(--neon-expected)";
@@ -1033,6 +1269,12 @@ body {
     document.getElementById('dateInput').value = `${m}/${d}`;
 
     buildCategoryRadioButtons();
+
+    const profilesMap = getCustomProfilesMap();
+    const names = Object.keys(profilesMap);
+    if (names.length > 0) {
+      currentActiveProfileName = names[0];
+    }
 
     document.getElementById('monthFilter').addEventListener('change', updateView);
     document.getElementById('receiptMonthFilter').addEventListener('change', updateDetailTable);
@@ -1330,6 +1572,7 @@ body {
         
         updateMonthFilterOptions();
         updateView();
+        updateMatrixTable();
       })
       .catch(err => {
         console.error('Receipt Data Fetch Error:', err);
@@ -1339,9 +1582,11 @@ body {
 
   function updateMonthFilterOptions() {
     const monthFilter = document.getElementById('monthFilter');
+    const matrixMonthFilter = document.getElementById('matrixMonthFilter');
     const receiptMonthFilter = document.getElementById('receiptMonthFilter');
     
     const currentSelected = monthFilter.value;
+    const currentMatrixSelected = matrixMonthFilter.value;
     const currentReceiptSelected = receiptMonthFilter.value;
 
     const monthsSet = new Set();
@@ -1352,23 +1597,22 @@ body {
 
     const sortedMonths = Array.from(monthsSet).sort().reverse();
 
-    monthFilter.innerHTML = '<option value="ALL">全期間 (直近3ヶ月)</option>';
-    sortedMonths.forEach(ym => {
-      const opt = document.createElement('option');
-      opt.value = ym;
-      const parts = ym.split('-');
-      opt.innerText = `${parts[0]}年${parseInt(parts[1], 10)}月`;
-      monthFilter.appendChild(opt);
-    });
+    const populateSelect = (selectEl, defaultLabel) => {
+      const val = selectEl.value;
+      selectEl.innerHTML = `<option value="ALL">${defaultLabel}</option>`;
+      sortedMonths.forEach(ym => {
+        const opt = document.createElement('option');
+        opt.value = ym;
+        const parts = ym.split('-');
+        opt.innerText = `${parts[0]}年${parseInt(parts[1], 10)}月`;
+        selectEl.appendChild(opt);
+      });
+      selectEl.value = val;
+    };
 
-    receiptMonthFilter.innerHTML = '<option value="ALL">全期間の明細</option>';
-    sortedMonths.forEach(ym => {
-      const opt = document.createElement('option');
-      opt.value = ym;
-      const parts = ym.split('-');
-      opt.innerText = `${parts[0]}年${parseInt(parts[1], 10)}月`;
-      receiptMonthFilter.appendChild(opt);
-    });
+    populateSelect(monthFilter, "全期間 (選択期間)");
+    populateSelect(matrixMonthFilter, "全期間");
+    populateSelect(receiptMonthFilter, "全期間の明細");
 
     const now = new Date();
     const nowYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1381,6 +1625,12 @@ body {
       monthFilter.value = sortedMonths[0];
     }
 
+    if (sortedMonths.includes(currentMatrixSelected)) {
+      matrixMonthFilter.value = currentMatrixSelected;
+    } else {
+      matrixMonthFilter.value = 'ALL';
+    }
+
     if (sortedMonths.includes(currentReceiptSelected)) {
       receiptMonthFilter.value = currentReceiptSelected;
     } else {
@@ -1388,19 +1638,31 @@ body {
     }
   }
 
-  function getPast3Months(targetYM, availableMonths) {
+  function getTargetMonths(targetYM, availableMonths, periodCount) {
     if (targetYM === 'ALL') {
+      if (periodCount === 'ALL') {
+        return [...availableMonths].sort();
+      }
       if (availableMonths.length === 0) return [];
       targetYM = availableMonths[0];
     }
 
+    if (periodCount === 'ALL') {
+      const parts = targetYM.split('-');
+      if (parts.length !== 2) return [targetYM];
+      let y = parseInt(parts[0], 10);
+      let m = parseInt(parts[1], 10);
+      return availableMonths.filter(ym => ym <= targetYM).sort();
+    }
+
+    const count = parseInt(periodCount, 10);
     const parts = targetYM.split('-');
     if (parts.length !== 2) return [targetYM];
     let y = parseInt(parts[0], 10);
     let m = parseInt(parts[1], 10);
 
     const result = [];
-    for (let i = 2; i >= 0; i--) {
+    for (let i = count - 1; i >= 0; i--) {
       let targetM = m - i;
       let targetY = y;
       while (targetM <= 0) {
@@ -1414,39 +1676,50 @@ body {
 
   function getCurrentFilteredDataAndMonths() {
     const selectedMonth = document.getElementById('monthFilter').value;
+    const periodVal = document.getElementById('analysisPeriodSelect').value;
+    const periodCount = periodVal === 'ALL' ? 'ALL' : (parseInt(periodVal, 10) || 3);
+
+    const titleEl = document.getElementById('analysisMainTitle');
+    if (periodVal === 'ALL') titleEl.innerText = "📊 カテゴリ別集計（全期間）";
+    else if (periodCount === 3) titleEl.innerText = "📊 カテゴリ別集計（直近3ヶ月比較）";
+    else if (periodCount === 6) titleEl.innerText = "📊 カテゴリ別集計（直近6ヶ月比較）";
+    else if (periodCount === 12) titleEl.innerText = "📊 カテゴリ別集計（直近1年比較）";
+    else if (periodCount === 24) titleEl.innerText = "📊 カテゴリ別集計（直近2年比較）";
+    else if (periodCount === 36) titleEl.innerText = "📊 カテゴリ別集計（直近3年比較）";
+
     const monthsSet = new Set();
     allReceiptData.forEach(row => {
       const ym = getYearMonth(row.date);
       if (ym.length === 7) monthsSet.add(ym);
     });
     const sortedAvailableMonths = Array.from(monthsSet).sort().reverse();
-    const target3Months = getPast3Months(selectedMonth, sortedAvailableMonths);
+    const targetMonths = getTargetMonths(selectedMonth, sortedAvailableMonths, periodCount);
 
     const filteredData = allReceiptData.filter(row => {
       const ym = getYearMonth(row.date);
-      return target3Months.includes(ym);
+      return targetMonths.includes(ym);
     });
 
-    return { filteredData, target3Months };
+    return { filteredData, targetMonths, periodCount: periodCount === 'ALL' ? targetMonths.length : periodCount };
   }
 
   function updateView() {
-    const { filteredData, target3Months } = getCurrentFilteredDataAndMonths();
-    updateSummaryAndAnalysis(filteredData, target3Months);
+    const { filteredData, targetMonths, periodCount } = getCurrentFilteredDataAndMonths();
+    updateSummaryAndAnalysis(filteredData, targetMonths, periodCount);
     updateDetailTable();
     updateSpecialDetailTable();
   }
 
-  function updateSummaryAndAnalysis(filteredData, target3Months) {
+  function updateSummaryAndAnalysis(filteredData, targetMonths, periodCount) {
     const activeCategories = getFilteredCategories();
     const pieCategories = getPieChartCategories();
 
     const summaryMap = {};
     activeCategories.forEach(cat => {
-      summaryMap[cat] = [0, 0, 0];
+      summaryMap[cat] = new Array(targetMonths.length).fill(0);
     });
 
-    const monthTotals = [0, 0, 0];
+    const monthTotals = new Array(targetMonths.length).fill(0);
 
     filteredData.forEach(row => {
       const cat = row.category;
@@ -1454,43 +1727,48 @@ body {
 
       const amt = Number(row.amount) || 0;
       const ym = getYearMonth(row.date);
-      const monthIndex = target3Months.indexOf(ym);
+      const monthIndex = targetMonths.indexOf(ym);
 
       if (monthIndex !== -1) {
         if (!summaryMap[cat]) {
-          summaryMap[cat] = [0, 0, 0];
+          summaryMap[cat] = new Array(targetMonths.length).fill(0);
         }
         summaryMap[cat][monthIndex] += amt;
         monthTotals[monthIndex] += amt;
       }
     });
 
-    // テーブルヘッダー
     const headerRow = document.getElementById('tableHeaderRow');
     headerRow.innerHTML = '<th>カテゴリ</th>';
-    target3Months.forEach(ym => {
+    targetMonths.forEach(ym => {
       const p = ym.split('-');
       const th = document.createElement('th');
-      th.innerText = `${parseInt(p[1], 10)}月`;
+      th.innerText = `${parseInt(p[0], 10)}/${parseInt(p[1], 10)}`;
       headerRow.appendChild(th);
     });
     const thAverage = document.createElement('th');
     thAverage.innerText = '平均';
     headerRow.appendChild(thAverage);
 
-    // テーブルボディ
     const tbody = document.getElementById('summaryTableBody');
     tbody.innerHTML = '';
 
     const chartLabels = activeCategories;
     const barDatasets = [];
-    const barColors = ['#00d8ff', '#00ff9d', '#ff9900'];
+    const barColors = ['#00d8ff', '#00ff9d', '#ff9900', '#9900ff', '#ffff00', '#ff00ff', '#76ff03', '#ff6d00', '#3d5afe', '#00e676', '#ffea00', '#ff1744'];
 
-    target3Months.forEach((ym, idx) => {
+    const now = new Date();
+    const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // 当月以外の月を平均計算の対象とする
+    const validMonthsForAverage = targetMonths.filter(ym => ym !== currentYM);
+    const averageCount = validMonthsForAverage.length > 0 ? validMonthsForAverage.length : 1;
+
+    targetMonths.forEach((ym, idx) => {
       const p = ym.split('-');
       const monthData = activeCategories.map(cat => summaryMap[cat][idx]);
       barDatasets.push({
-        label: `${parseInt(p[1], 10)}月`,
+        label: `${parseInt(p[0], 10)}/${parseInt(p[1], 10)}`,
         data: monthData,
         backgroundColor: barColors[idx % barColors.length],
         borderRadius: 4
@@ -1499,8 +1777,15 @@ body {
 
     activeCategories.forEach(cat => {
       const amounts = summaryMap[cat];
-      const rowSum = amounts.reduce((a, b) => a + b, 0);
-      const rowAverage = Math.round(rowSum / 3);
+      
+      // 当月を除外して平均を計算
+      let validSum = 0;
+      targetMonths.forEach((ym, idx) => {
+        if (ym !== currentYM) {
+          validSum += amounts[idx];
+        }
+      });
+      const rowAverage = Math.round(validSum / averageCount);
 
       const tr = document.createElement('tr');
       let html = `<td>${cat}</td>`;
@@ -1515,52 +1800,44 @@ body {
     const totalTr = document.createElement('tr');
     totalTr.className = 'total-row';
     let totalHtml = `<td>平均合計</td>`;
-    let grandTotalSum = 0;
-    monthTotals.forEach(t => {
-      totalHtml += `<td>¥${t.toLocaleString()}</td>`;
-      grandTotalSum += t;
+    
+    // 当月以外の月の合計から平均を算出
+    let validGrandTotalSum = 0;
+    targetMonths.forEach((ym, idx) => {
+      totalHtml += `<td>¥${monthTotals[idx].toLocaleString()}</td>`;
+      if (ym !== currentYM) {
+        validGrandTotalSum += monthTotals[idx];
+      }
     });
-    const grandAverage = Math.round(grandTotalSum / 3);
+    const grandAverage = Math.round(validGrandTotalSum / averageCount);
     totalHtml += `<td>¥${grandAverage.toLocaleString()}</td>`;
     totalTr.innerHTML = totalHtml;
     tbody.appendChild(totalTr);
 
-    render3MonthsBarChart(chartLabels, barDatasets);
+    renderMonthsBarChart(chartLabels, barDatasets);
 
-    if (target3Months.length >= 3) {
-      document.getElementById('pieChartTitle1').innerText = `${parseInt(target3Months[0].split('-')[1], 10)}月 の内訳`;
-      document.getElementById('pieChartTitle2').innerText = `${parseInt(target3Months[1].split('-')[1], 10)}月 の内訳`;
-      document.getElementById('pieChartTitle3').innerText = `${parseInt(target3Months[2].split('-')[1], 10)}月 の内訳（当月）`;
+    const pieTargetMonths = targetMonths.slice(-3);
+    if (pieTargetMonths.length >= 1) {
+      document.getElementById('pieChartTitle1').innerText = pieTargetMonths.length >= 3 ? `${parseInt(pieTargetMonths[0].split('-')[1], 10)}月 の内訳` : '';
+      document.getElementById('pieChartTitle2').innerText = pieTargetMonths.length >= 2 ? `${parseInt(pieTargetMonths[pieTargetMonths.length - 2].split('-')[1], 10)}月 の内訳` : '';
+      document.getElementById('pieChartTitle3').innerText = `${parseInt(pieTargetMonths[pieTargetMonths.length - 1].split('-')[1], 10)}月 の内訳（当月）`;
     }
 
-    const valuesMonth1 = pieCategories.map(cat => summaryMap[cat][0] || 0);
-    const valuesMonth2 = pieCategories.map(cat => summaryMap[cat][1] || 0);
-    const valuesMonth3 = pieCategories.map(cat => summaryMap[cat][2] || 0);
+    const getPieValuesForMonthIndex = (mOffsetFromEnd) => {
+      const idxInTarget = targetMonths.length - mOffsetFromEnd;
+      if (idxInTarget < 0 || idxInTarget >= targetMonths.length) return pieCategories.map(() => 0);
+      return pieCategories.map(cat => summaryMap[cat][idxInTarget] || 0);
+    };
+
+    const valuesMonth1 = getPieValuesForMonthIndex(3);
+    const valuesMonth2 = getPieValuesForMonthIndex(2);
+    const valuesMonth3 = getPieValuesForMonthIndex(1);
 
     renderCategoryChart('categoryChartMonth1', pieCategories, valuesMonth1, (inst) => { categoryChartInstance1 = inst; });
     renderCategoryChart('categoryChartMonth2', pieCategories, valuesMonth2, (inst) => { categoryChartInstance2 = inst; });
     renderCategoryChart('categoryChartMonth3', pieCategories, valuesMonth3, (inst) => { categoryChartInstance3 = inst; });
 
-    // 共通カスタム凡例の描画（特別費・ローンを除外した円グラフ用の凡例）
     renderSharedCustomLegend(pieCategories);
-  }
-
-  function renderSharedCustomLegend(labels) {
-    const container = document.getElementById('sharedCustomLegend');
-    container.innerHTML = '';
-
-    labels.forEach((cat, index) => {
-      const colorIndex = ALL_CATEGORIES.indexOf(cat);
-      const color = CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
-
-      const item = document.createElement('div');
-      item.className = 'custom-legend-item';
-      item.innerHTML = `
-        <div class="custom-legend-color" style="background-color: ${color};"></div>
-        <span>${cat}</span>
-      `;
-      container.appendChild(item);
-    });
   }
 
   function updateDetailTable() {
@@ -1617,6 +1894,7 @@ body {
   function updateSpecialDetailTable() {
     let specialData = [];
     const subTitleEl = document.getElementById('specialSubTitle');
+    const periodCount = parseInt(document.getElementById('analysisPeriodSelect').value, 10) || 3;
 
     if (isSpecialAllPeriod) {
       specialData = allReceiptData.filter(row => row.category === '特別費');
@@ -1624,7 +1902,7 @@ body {
     } else {
       const { filteredData } = getCurrentFilteredDataAndMonths();
       specialData = filteredData.filter(row => row.category === '特別費');
-      subTitleEl.innerText = "直近3ヶ月分の特別費";
+      subTitleEl.innerText = `直近${periodCount}ヶ月分の特別費`;
     }
 
     specialData.sort((a, b) => b.dateObj - a.dateObj || b.originalIndex - a.originalIndex);
@@ -1659,6 +1937,148 @@ body {
     container.appendChild(listDiv);
   }
 
+  function updateMatrixTable() {
+    if (!allReceiptData || allReceiptData.length === 0) {
+      document.getElementById('matrixTableBody').innerHTML = '<tr><td style="text-align: center; color: var(--text-sub); padding: 15px;">データがありません</td></tr>';
+      return;
+    }
+
+    const matrixSelectedMonth = document.getElementById('matrixMonthFilter').value;
+    const matrixPeriodVal = document.getElementById('matrixPeriodSelect').value;
+    const matrixPeriodCount = matrixPeriodVal === 'ALL' ? 'ALL' : (parseInt(matrixPeriodVal, 10) || 3);
+
+    const monthsSet = new Set();
+    allReceiptData.forEach(row => {
+      const ym = getYearMonth(row.date);
+      if (ym.length === 7) monthsSet.add(ym);
+    });
+    const sortedAvailableMonths = Array.from(monthsSet).sort().reverse();
+    
+    const targetMonthsDesc = getTargetMonths(matrixSelectedMonth, sortedAvailableMonths, matrixPeriodCount);
+    const sortedMonths = [...targetMonthsDesc].sort();
+
+    const categories = getFilteredCategories(matrixExpenseFilter);
+    const matrixData = {};
+    categories.forEach(cat => {
+      matrixData[cat] = {};
+      sortedMonths.forEach(ym => {
+        matrixData[cat][ym] = 0;
+      });
+    });
+
+    const monthColumnTotals = {};
+    sortedMonths.forEach(ym => { monthColumnTotals[ym] = 0; });
+
+    allReceiptData.forEach(row => {
+      const cat = row.category;
+      if (!categories.includes(cat)) return;
+
+      const ym = getYearMonth(row.date);
+      const amt = Number(row.amount) || 0;
+
+      if (matrixData[cat] && matrixData[cat][ym] !== undefined) {
+        matrixData[cat][ym] += amt;
+        monthColumnTotals[ym] += amt;
+      }
+    });
+
+    const headerRow = document.getElementById('matrixHeaderRow');
+    let headerHtml = '<th>カテゴリ</th>';
+    sortedMonths.forEach(ym => {
+      const p = ym.split('-');
+      headerHtml += `<th>${parseInt(p[0], 10)}/${parseInt(p[1], 10)}</th>`;
+    });
+    headerHtml += '<th>平均</th>';
+    headerRow.innerHTML = headerHtml;
+
+    const tbody = document.getElementById('matrixTableBody');
+    tbody.innerHTML = '';
+
+    const now = new Date();
+    const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // 当月以外の月を平均計算の対象とする
+    const validMonthsForAverage = sortedMonths.filter(ym => ym !== currentYM);
+    const actualMonthCount = validMonthsForAverage.length > 0 ? validMonthsForAverage.length : 1;
+
+    let grandTotalSum = 0;
+
+    categories.forEach(cat => {
+      const tr = document.createElement('tr');
+      let rowHtml = `<td>${cat}</td>`;
+      let validRowSum = 0;
+
+      // 各月の金額と平均の差分を計算・構築
+      const catAmounts = {};
+      sortedMonths.forEach(ym => {
+        const val = matrixData[cat][ym];
+        catAmounts[ym] = val;
+        if (ym !== currentYM) {
+          validRowSum += val;
+        }
+      });
+
+      const rowAverage = Math.round(validRowSum / actualMonthCount);
+
+      sortedMonths.forEach(ym => {
+        const val = catAmounts[ym];
+        const diff = val - rowAverage;
+        let diffHtml = '';
+        if (diff > 0) {
+          diffHtml = `<span class="diff-plus">(+¥${diff.toLocaleString()})</span>`;
+        } else if (diff < 0) {
+          diffHtml = `<span class="diff-minus">(-¥${Math.abs(diff).toLocaleString()})</span>`;
+        } else {
+          diffHtml = `<span class="diff-zero">(±¥0)</span>`;
+        }
+
+        rowHtml += `<td>${val > 0 ? '¥' + val.toLocaleString() : '-'}${diffHtml}</td>`;
+        if (ym !== currentYM) {
+          grandTotalSum += val;
+        }
+      });
+
+      rowHtml += `<td><strong>${rowAverage > 0 ? '¥' + rowAverage.toLocaleString() : '-'}</strong></td>`;
+      tr.innerHTML = rowHtml;
+      tbody.appendChild(tr);
+    });
+
+    const totalTr = document.createElement('tr');
+    totalTr.className = 'total-row';
+    let totalHtml = '<td>平均合計</td>';
+    let validAllMonthsSum = 0;
+
+    const colTotals = {};
+    sortedMonths.forEach(ym => {
+      const mTotal = monthColumnTotals[ym];
+      colTotals[ym] = mTotal;
+      if (ym !== currentYM) {
+        validAllMonthsSum += mTotal;
+      }
+    });
+
+    const grandAverage = Math.round(validAllMonthsSum / actualMonthCount);
+
+    sortedMonths.forEach(ym => {
+      const mTotal = colTotals[ym];
+      const diff = mTotal - grandAverage;
+      let diffHtml = '';
+      if (diff > 0) {
+        diffHtml = `<span class="diff-plus">(+¥${diff.toLocaleString()})</span>`;
+      } else if (diff < 0) {
+        diffHtml = `<span class="diff-minus">(-¥${Math.abs(diff).toLocaleString()})</span>`;
+      } else {
+        diffHtml = `<span class="diff-zero">(±¥0)</span>`;
+      }
+
+      totalHtml += `<td>¥${mTotal.toLocaleString()}${diffHtml}</td>`;
+    });
+
+    totalHtml += `<td>¥${grandAverage.toLocaleString()}</td>`;
+    totalTr.innerHTML = totalHtml;
+    tbody.appendChild(totalTr);
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>"]/g, function(match) {
@@ -1667,13 +2087,13 @@ body {
     });
   }
 
-  function render3MonthsBarChart(labels, datasets) {
-    const ctx = document.getElementById('barChart3Months').getContext('2d');
-    if (barChart3MonthsInstance) barChart3MonthsInstance.destroy();
+  function renderMonthsBarChart(labels, datasets) {
+    const ctx = document.getElementById('barChartMonths').getContext('2d');
+    if (barChartMonthsInstance) barChartMonthsInstance.destroy();
 
     const currentMax = Number(document.getElementById('barMaxSelect').value);
 
-    barChart3MonthsInstance = new Chart(ctx, {
+    barChartMonthsInstance = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: labels,
@@ -1718,8 +2138,6 @@ body {
     if (canvasId === 'categoryChartMonth2' && categoryChartInstance2) categoryChartInstance2.destroy();
     if (canvasId === 'categoryChartMonth3' && categoryChartInstance3) categoryChartInstance3.destroy();
 
-    const showLegend = false;
-
     const backgroundColors = labels.map(cat => {
       const colorIndex = ALL_CATEGORIES.indexOf(cat);
       return CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
@@ -1740,9 +2158,7 @@ body {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: {
-            display: showLegend
-          },
+          legend: { display: false },
           tooltip: {
             callbacks: {
               label: function(context) {
